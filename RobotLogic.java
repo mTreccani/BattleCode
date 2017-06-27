@@ -5,13 +5,18 @@ import battlecode.common.*;
 public abstract class RobotLogic {
 	
 	 static RobotController rc;
-	 
+	 private int numScout=0;
+	 private int numSoldier=0;
+	 private int numGardener=0;
+	 private int numLumberjack=0;
+	 private int numArchon=1;
+	 private int numTank=0;
 	 
 	 public abstract void run() throws GameActionException;
 	
 	 /**
-	  * è in pericolo se ci sono nemici nelle vicinanze o proiettili che lo stanno per colpire
-	  * @return true se è in pericolo
+	  * Ã¨ in pericolo se ci sono nemici nelle vicinanze o proiettili che lo stanno per colpire
+	  * @return true se Ã¨ in pericolo
 	  */
 	 public boolean isInDanger(){
 	     Team enemy = rc.getTeam().opponent();
@@ -117,6 +122,53 @@ public abstract class RobotLogic {
 	        return (perpendicularDist <= rc.getType().bodyRadius);
 	    }
 	
-
+	    public int getNumScout(){
+	    	return numScout;
+	    }
+	    
+	    public void setNumScout(int n){
+	    	numScout++;
+	    }
+	    
+	    public int getNumSoldier(){
+	    	return numSoldier;
+	    }
+	    
+	    public void setNumSoldier(int n){
+	    	numSoldier=numSoldier+n;
+	    }
+	    
+	    public int getNumGardener(){
+	    	return numGardener;
+	    }
+	    
+	    public void setNumGardener(int n){
+	    	numGardener=numGardener+n;
+	    }
+	    
+	    public int getNumLumberjack(){
+	    	return numLumberjack;
+	    }
+	    
+	    public void setNumLumberjack(int n){
+	    	numLumberjack=numLumberjack+n;
+	    }
+	    
+	    public int getNumTank(){
+	    	return numTank;
+	    }
+	    
+	    public void setNumTank(int n){
+	    	numTank=numTank+n;
+	    }
+	    
+	    public int getNumArchon(){
+	    	return numArchon;
+	    }
+	    
+	    public void setNumArchon(int n){
+	    	numArchon=numArchon+n;
+	    }
 
 }
+
