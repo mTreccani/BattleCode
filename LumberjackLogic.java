@@ -1,13 +1,7 @@
 package examplefuncsplayer;
 
-import battlecode.common.Clock;
-import battlecode.common.Direction;
-import battlecode.common.GameActionException;
-import battlecode.common.GameConstants;
-import battlecode.common.MapLocation;
-import battlecode.common.RobotInfo;
-import battlecode.common.RobotType;
-import battlecode.common.Team;
+import battlecode.common.*;
+
 
 public class LumberjackLogic extends RobotLogic {
 
@@ -23,7 +17,9 @@ public class LumberjackLogic extends RobotLogic {
 
                 // See if there are any enemy robots within striking range (distance 1 from lumberjack's radius)
                 RobotInfo[] robots = rc.senseNearbyRobots(RobotType.LUMBERJACK.bodyRadius+GameConstants.LUMBERJACK_STRIKE_RADIUS, enemy);
-
+                TreeInfo[] trees = rc.senseNearbyTrees(RobotType.LUMBERJACK.sensorRadius);
+                
+                
                 if(robots.length > 0 && !rc.hasAttacked()) {
                     // Use strike() to hit all nearby robots!
                     rc.strike();
@@ -38,6 +34,15 @@ public class LumberjackLogic extends RobotLogic {
                         Direction toEnemy = myLocation.directionTo(enemyLocation);
 
                         tryMove(toEnemy);
+                    } else if(trees.length > 0 && robots.length == 0){
+                    	MapLocation myLocation = rc.getLocation();
+                        MapLocation treeLocation = trees[0].getLocation();
+                        Direction toTree = myLocation.directionTo(treeLocation);
+
+                        tryMove(toTree);
+                        if(rc.canChop(treeLocation)){
+                        	rc.chop(treeLocation);
+                        }
                     } else {
                         // Move Randomly
                         tryMove(randomDirection());
