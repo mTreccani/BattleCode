@@ -4,7 +4,10 @@ import battlecode.common.*;
 
 public class ArchonLogic extends RobotLogic{
 	
-	RobotController rc;
+	
+	public ArchonLogic (RobotController rc){
+		super(rc);
+	}
 	
 	@Override
 	public void run() throws GameActionException {
@@ -44,3 +47,4 @@ public class ArchonLogic extends RobotLogic{
         }
 	}
 }
+
