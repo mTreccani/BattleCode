@@ -5,12 +5,15 @@ import battlecode.common.*;
 public class SoldierLogic extends RobotLogic{
 	Team enemy = rc.getTeam().opponent();
 	
+	public SoldierLogic (RobotController rc){
+		super(rc);
+	}
+	
 	@Override
 	public void run() throws GameActionException {
 		
 	    // Try/catch blocks stop unhandled exceptions, which cause your robot to explode
         try {
-            MapLocation myLocation = rc.getLocation();
 
             // See if there are any nearby enemy robots
             RobotInfo[] robots = rc.senseNearbyRobots(rc.getType().sensorRadius, enemy);
@@ -34,16 +37,16 @@ public class SoldierLogic extends RobotLogic{
             }
             
             if(robots.length > 0) {
-                MapLocation miaposizione = rc.getLocation();
+                MapLocation myLocation = rc.getLocation();
                 MapLocation enemyLocation = robots[0].getLocation();
-                Direction toEnemy = miaposizione.directionTo(enemyLocation);
+                Direction toEnemy = myLocation.directionTo(enemyLocation);
 
                 tryMove(toEnemy);
             }
-                else{
+            else{
             // Move randomly
-            tryMove(randomDirection());
-                }
+                	tryMove(randomDirection());
+            }
             // Clock.yield() makes the robot wait until the next turn, then it will perform this loop again
             Clock.yield();
 
