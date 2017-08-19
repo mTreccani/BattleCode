@@ -4,6 +4,10 @@ import battlecode.common.*;
 
 public class GardenerLogic extends RobotLogic{
 
+	public GardenerLogic (RobotController rc){
+		super(rc);
+	}
+	
 	@Override
 	public void run() throws GameActionException {
 		try {
@@ -63,3 +67,4 @@ public class GardenerLogic extends RobotLogic{
 	
 
 }
+
