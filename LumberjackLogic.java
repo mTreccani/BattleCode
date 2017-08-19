@@ -5,6 +5,10 @@ import battlecode.common.*;
 
 public class LumberjackLogic extends RobotLogic {
 
+	public LumberjackLogic (RobotController rc){
+		super(rc);
+	}
+	
 	@Override
 	public void run() throws GameActionException {
 		Team enemy = rc.getTeam().opponent();
