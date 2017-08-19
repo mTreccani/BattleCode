@@ -4,7 +4,11 @@ import battlecode.common.*;
 
 public class TankLogic extends RobotLogic{
 
-Team enemy = rc.getTeam().opponent();
+	Team enemy = rc.getTeam().opponent();
+	
+	public TankLogic (RobotController rc){
+		super(rc);
+	}
 	
 	@Override
 	public void run() throws GameActionException {
@@ -67,7 +71,3 @@ Team enemy = rc.getTeam().opponent();
             e.printStackTrace();
         }
     }
-
-
-  
-}
