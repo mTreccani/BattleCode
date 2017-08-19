@@ -11,14 +11,48 @@ public abstract class RobotLogic {
 	 private int numLumberjack=0;
 	 private int numArchon=1;
 	 private int numTank=0;
+	 private int a = 120;
+	 private int b = 120;
+	 
+	 public RobotLogic(RobotController rc) {
+		 this.rc=rc;
+	 }
 	 
 	 public abstract void run() throws GameActionException;
+	 
+	 public void runnerStrategy() throws GameActionException{
+		 Team enemy = rc.getTeam().opponent();
+		 RobotInfo[] robots = rc.senseNearbyRobots(rc.getType().bodyRadius, enemy);
+		 TreeInfo[] trees = rc.senseNearbyTrees(RobotType.SCOUT.sensorRadius);
+	 
+		 MapLocation myLocation = rc.getLocation();
+		 MapLocation dir = new MapLocation(a,b); 
+		 Direction arrive = myLocation.directionTo(dir);
+
+	     	 tryMove(arrive); 
+	        
+		 if(robots.length>0){
+			 MapLocation enemyLocation = robots[0].getLocation();
+			 rc.broadcast(0,(int)enemyLocation.x);
+             rc.broadcast(1,(int)enemyLocation.y);  
+			 a=a+(int)Math.random()*50-25;
+			 b=b+(int)Math.random()*50-25;
+		 }
+		 
+		 if(trees.length>0){
+			 MapLocation treeLocation = trees[0].getLocation();
+			 rc.broadcast(2,(int)treeLocation.x);
+             rc.broadcast(3,(int)treeLocation.y); 
+		 }
+		 
+		 Clock.yield();
+	 }
 	
 	 /**
 	  * è in pericolo se ci sono nemici nelle vicinanze o proiettili che lo stanno per colpire
 	  * @return true se è in pericolo
 	  */
-	 public boolean isInDanger(){
+	 static boolean isInDanger(){
 	     Team enemy = rc.getTeam().opponent();
 	     RobotInfo[] robots = rc.senseNearbyRobots(rc.getType().sensorRadius, enemy);
 	     BulletInfo[] bullets = rc.senseNearbyBullets(rc.getType().bodyRadius+1);
@@ -121,6 +155,7 @@ public abstract class RobotLogic {
 
 	        return (perpendicularDist <= rc.getType().bodyRadius);
 	    }
+	    
 	
 	    public int getNumScout(){
 	    	return numScout;
