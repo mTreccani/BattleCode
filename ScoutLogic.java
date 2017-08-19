@@ -6,13 +6,21 @@ import battlecode.common.*;
 public class ScoutLogic extends RobotLogic{
 	Team enemy = rc.getTeam().opponent();
 	
+	public ScoutLogic (RobotController rc){
+		super(rc);
+	}
+	
 	@Override
 	public void run() throws GameActionException {
 		
 	    // Try/catch blocks stop unhandled exceptions, which cause your robot to explode
         try {
 
-            // See if there are any nearby enemy robots
+        	if(rc.getRoundNum()%100==0 || getNumScout()>5){
+        		runnerStrategy();
+        	}
+           
+        	// See if there are any nearby enemy robots
             RobotInfo[] robots = rc.senseNearbyRobots(RobotType.SCOUT.sensorRadius, enemy);
             TreeInfo[] trees = rc.senseNearbyTrees(RobotType.SCOUT.sensorRadius);
             
@@ -51,3 +59,4 @@ public class ScoutLogic extends RobotLogic{
         }
 	}
 }
+
