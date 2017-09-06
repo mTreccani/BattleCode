@@ -14,9 +14,10 @@ public class TankLogic extends RobotLogic{
 	public void run() throws GameActionException{
 		
 		// Position of Archon
-		int xPos = rc.readBroadcast(0);
+	int xPos = rc.readBroadcast(0);
         int yPos = rc.readBroadcast(1);
         MapLocation archonLoc = new MapLocation(xPos,yPos);
+        int birthround=rc.getRoundNum();
         
         while(true){
         	
@@ -66,7 +67,7 @@ public class TankLogic extends RobotLogic{
 	            tryMove(randomDirection());
 	                }
 	            
-	            if(rc.getHealth()<50) setNumTank(-1);
+	            if(rc.getHealth()< RobotType.TANK.maxHealth/5 && rc.getRoundNum() - birthRound >= 20) setNumTank(-1);
 	            // Clock.yield() makes the robot wait until the next turn, then it will perform this loop again
 	            Clock.yield();
 	
