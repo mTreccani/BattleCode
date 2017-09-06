@@ -23,12 +23,13 @@ public class ArchonLogic extends RobotLogic{
                 Direction dir = randomDirection();
 
                 // Randomly attempt to build a gardener in this direction
-                if (rc.canHireGardener(dir) &&  rc.getTeamBullets() >= 200 && !isInDanger() && rc.getRobotCount()<15) {
+                if (shouldBuildGardener()) {
                     rc.hireGardener(dir);
+                    setNumGardener(+1);
                 }
 
                 // Move randomly
-                //tryMove(randomDirection());
+                tryMove(dir);
 
                 // Broadcast archon's location for other robots on the team to know
                 if(isInDanger() || rc.getRoundNum()%10==0){
@@ -45,6 +46,9 @@ public class ArchonLogic extends RobotLogic{
                 e.printStackTrace();
             }
         }
+	}
+	public boolean shouldBuildGardener() throws GameActionException{
+		return (rc.canHireGardener(randomDirection()) &&  rc.getTeamBullets() >= 200 && !isInDanger() && rc.getRobotCount()<15);
 	}
 }
 

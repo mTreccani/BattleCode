@@ -6,34 +6,34 @@ public abstract class RobotLogic {
 	
 	 public RobotController rc;
 	 
-	 Team ally;
 	 Team enemy;
+	 Team ally;
 	 MapLocation myLocation;
-	 RobotInfo[] enemyRobots;   //per le strategie
-	 RobotInfo[] allyRobots;   //per le strategie
+	 RobotInfo[] enemyRobots;
+	 RobotInfo[] allyRobots;  //per le strategie
 	 TreeInfo[] trees;
 	 BulletInfo[] bullets;
+	 private float angolo;
 	 
 	 boolean goodAreaExplorer=false;
 	 private Direction dirExplorer= new Direction(0);
-	 private int numScout=0;
-	 private int numSoldier=0;
-	 private int numGardener=0;
-	 private int numLumberjack=0;
-	 private int numArchon=1;
-	 private int numTank=0;
-	 private float angolo;
 	 
+	 //broadcast channels
+	 public int NUM_SCOUT=50;
+	 public int NUM_SOLDIER=51;
+	 public int NUM_GARDENER=52;
+	 public int NUM_LUMBERJACK=53;
+	 public int NUM_ARCHON=55;
+	 public int NUM_TANK=54;
 	 
-	 int dir =0 ;
 	 
 	 public RobotLogic(RobotController rc) {
 		 this.rc=rc;
 		 enemy = rc.getTeam().opponent();
 		 ally = rc.getTeam();
 		 myLocation = rc.getLocation();
-		 enemyRobots = rc.senseNearbyRobots(rc.getType().sensorRadius, enemy); 
-		 allyRobots = rc.senseNearbyRobots(rc.getType().sensorRadius, ally);
+		 enemyRobots = rc.senseNearbyRobots(rc.getType().sensorRadius, enemy);
+		 allyRobots = rc.senseNearbyRobots(rc.getType().sensorRadius, ally);//per le strategie
 		 trees = rc.senseNearbyTrees(rc.getType().sensorRadius);
 		 bullets = rc.senseNearbyBullets(rc.getType().bodyRadius+1);
 		 angolo = 1;
@@ -41,43 +41,40 @@ public abstract class RobotLogic {
 	 
 	 public abstract void run() throws GameActionException;
 	 
-	 
 	 public void runnerStrategy() throws GameActionException{
+	
 		 angolo +=(angolo/rc.getRoundNum());
 		 Direction dir = new Direction(angolo);
 		 tryMove(dir);
-		 
 	 }
-
- 
-	 
+	
 	 public void exploreStrategy() throws GameActionException{
-/*		
-		if(treesExplorer.length>=5 && enemyRobots.length<=2) {
-			goodAreaExplorer=true;
-			rc.broadcast(4,(int)myLocation.x);
-			rc.broadcast(5,(int)myLocation.y);
-		}
-		
-		if(!goodAreaExplorer){
-			dir+=10;
-			Direction dire = new Direction(dir);
-			tryMove(dire);
-		}
-		else{
-			tryMove(randomDirection());
-		}*/
-		 MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy);
-		 MapLocation[] myArchon = rc.getInitialArchonLocations(ally);
-		 if(rc.senseNearbyRobots(rc.getType().SCOUT.sensorRadius).length<1){
-			 Direction toMyArchon = myLocation.directionTo(myArchon[0]);
-			 rc.move(toMyArchon);
-		 }
-		 else{
-			 Direction toEnemyArchon = myLocation.directionTo(enemyArchon[0]);
-			 rc.move(toEnemyArchon);
-		 }
-		
+		 /*		
+			if(treesExplorer.length>=5 && enemyRobots.length<=2) {
+				goodAreaExplorer=true;
+				rc.broadcast(4,(int)myLocation.x);
+				rc.broadcast(5,(int)myLocation.y);
+			}
+			
+			if(!goodAreaExplorer){
+				dir+=10;
+				Direction dire = new Direction(dir);
+				tryMove(dire);
+			}
+			else{
+				tryMove(randomDirection());
+			}*/
+			 MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy);
+			 MapLocation[] myArchon = rc.getInitialArchonLocations(ally);
+			 if(rc.senseNearbyRobots(rc.getType().SCOUT.sensorRadius).length<1){
+				 Direction toMyArchon = myLocation.directionTo(myArchon[0]);
+				 rc.move(toMyArchon);
+			 }
+			 else{
+				 Direction toEnemyArchon = myLocation.directionTo(enemyArchon[0]);
+				 rc.move(toEnemyArchon);
+			 }
+			
 	 }
 	 
 	 public void vikingStrategy() throws GameActionException{
@@ -85,8 +82,8 @@ public abstract class RobotLogic {
 	 }
 	 
 	 /**
-	  * Ã¨ in pericolo se ci sono nemici nelle vicinanze o proiettili che lo stanno per colpire
-	  * @return true se Ã¨ in pericolo
+	  * è in pericolo se ci sono nemici nelle vicinanze o proiettili che lo stanno per colpire
+	  * @return true se è in pericolo
 	  */
 	 boolean isInDanger(){
 		 if(enemyRobots.length>0 || bullets.length>0){
@@ -190,55 +187,53 @@ public abstract class RobotLogic {
     }
     
 
-    public int getNumScout(){
-    	return numScout;
+    public int getNumScout() throws GameActionException{
+    	return rc.readBroadcast(NUM_SCOUT);
     }
     
-    public void setNumScout(int n){
-    	numScout= numScout + n;
+    public void setNumScout(int n) throws GameActionException{
+    	rc.broadcast(NUM_SCOUT, rc.readBroadcast(NUM_SCOUT) + n );
     }
     
-    public int getNumSoldier(){
-    	return numSoldier;
+    public int getNumSoldier() throws GameActionException{
+    	return rc.readBroadcast(NUM_SOLDIER);
     }
     
-    public void setNumSoldier(int n){
-    	numSoldier=numSoldier+n;
+    public void setNumSoldier(int n) throws GameActionException{
+    	rc.broadcast(NUM_SOLDIER, rc.readBroadcast(NUM_SOLDIER) + n );
     }
     
-    public int getNumGardener(){
-    	return numGardener;
+    public int getNumGardener() throws GameActionException{
+    	return rc.readBroadcast(NUM_GARDENER);
     }
     
-    public void setNumGardener(int n){
-    	numGardener=numGardener+n;
+    public void setNumGardener(int n) throws GameActionException{
+    	rc.broadcast(NUM_GARDENER, rc.readBroadcast(NUM_GARDENER) + n );
     }
     
-    public int getNumLumberjack(){
-    	return numLumberjack;
+    public int getNumLumberjack() throws GameActionException{
+    	return rc.readBroadcast(NUM_LUMBERJACK);
     }
     
-    public void setNumLumberjack(int n){
-    	numLumberjack=numLumberjack+n;
+    public void setNumLumberjack(int n) throws GameActionException{
+    	rc.broadcast(NUM_LUMBERJACK, rc.readBroadcast(NUM_LUMBERJACK) + n );
     }
     
-    public int getNumTank(){
-    	return numTank;
+    public int getNumTank() throws GameActionException{
+    	return rc.readBroadcast(NUM_TANK);
     }
     
-    public void setNumTank(int n){
-    	numTank=numTank+n;
+    public void setNumTank(int n) throws GameActionException{
+    	rc.broadcast(NUM_TANK, rc.readBroadcast(NUM_TANK) + n );
     }
     
-    public int getNumArchon(){
-    	return numArchon;
+    public int getNumArchon() throws GameActionException{
+    	return rc.readBroadcast(NUM_ARCHON);
     }
     
-    public void setNumArchon(int n){
-    	numArchon=numArchon+n;
+    public void setNumArchon(int n) throws GameActionException{
+    	rc.broadcast(NUM_ARCHON, rc.readBroadcast(NUM_ARCHON) + n );
     }
 
 }
-
-
 
