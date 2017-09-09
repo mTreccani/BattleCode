@@ -14,18 +14,24 @@ public abstract class RobotLogic {
 	 TreeInfo[] trees;
 	 BulletInfo[] bullets;
 	 private float angolo;
-	 
-	 boolean goodAreaExplorer=false;
-	 private Direction dirExplorer= new Direction(0);
+	 public static final int DEATHDIVIDER=4;
+	 public static final int REGENERATIONROUNDS=20;
 	 
 	 //broadcast channels
-	 public int NUM_SCOUT=50;
-	 public int NUM_SOLDIER=51;
-	 public int NUM_GARDENER=52;
-	 public int NUM_LUMBERJACK=53;
-	 public int NUM_ARCHON=55;
-	 public int NUM_TANK=54;
-	 
+	 public static final int NUM_SCOUT=50;
+	 public static final int NUM_SOLDIER=51;
+	 public static final int NUM_GARDENER=52;
+	 public static final int NUM_LUMBERJACK=53;
+	 public static final int NUM_ARCHON=55;
+	 public static final int NUM_TANK=54;
+	 public static final int EXPLORER_X=0;
+	 public static final int EXPLORER_Y=1;
+	 public static final int IS_A_GOOD_ZONE=2;
+	 public static final int ARCHON_LOCATION_X=3;
+	 public static final int ARCHON_LOCATION_Y=4;
+	 public static final int IS_ARCHON_IN_DANGER=5;
+	 public static final int I_HAVE_BEEN_HIT_X=6;
+	 public static final int I_HAVE_BEEN_HIT_Y=7;
 	 
 	 public RobotLogic(RobotController rc) {
 		 this.rc=rc;
@@ -36,37 +42,30 @@ public abstract class RobotLogic {
 		 allyRobots = rc.senseNearbyRobots(rc.getType().sensorRadius, ally);//per le strategie
 		 trees = rc.senseNearbyTrees(rc.getType().sensorRadius);
 		 bullets = rc.senseNearbyBullets(rc.getType().bodyRadius+1);
-		 angolo = 1;
+		 angolo = 0;
 	 }
 	 
 	 public abstract void run() throws GameActionException;
 	 
 	 public void runnerStrategy() throws GameActionException{
-	
-		 angolo +=(angolo/rc.getRoundNum());
-		 Direction dir = new Direction(angolo);
-		 tryMove(dir);
+		 gameInfo();
+		 MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy);
+		 if(rc.getRoundNum()%100<40 && myLocation.distanceTo(enemyArchon[0])>35){
+		     Direction toEnemyArchon = myLocation.directionTo(enemyArchon[0]);
+		     rc.move(toEnemyArchon);
+		 }
+		 else{
+			 tryMove(randomDirection());
+		 }
+		 
+		 
 	 }
 	
 	 public void exploreStrategy() throws GameActionException{
-		 /*		
-			if(treesExplorer.length>=5 && enemyRobots.length<=2) {
-				goodAreaExplorer=true;
-				rc.broadcast(4,(int)myLocation.x);
-				rc.broadcast(5,(int)myLocation.y);
-			}
-			
-			if(!goodAreaExplorer){
-				dir+=10;
-				Direction dire = new Direction(dir);
-				tryMove(dire);
-			}
-			else{
-				tryMove(randomDirection());
-			}*/
+		 /*
 			 MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy);
 			 MapLocation[] myArchon = rc.getInitialArchonLocations(ally);
-			 if(rc.senseNearbyRobots(rc.getType().SCOUT.sensorRadius).length<1){
+			 if(rc.senseNearbyRobots(rc.getType().sensorRadius).length<1){
 				 Direction toMyArchon = myLocation.directionTo(myArchon[0]);
 				 rc.move(toMyArchon);
 			 }
@@ -74,6 +73,30 @@ public abstract class RobotLogic {
 				 Direction toEnemyArchon = myLocation.directionTo(enemyArchon[0]);
 				 rc.move(toEnemyArchon);
 			 }
+			 */
+		 gameInfo();
+		 
+		 if(trees.length>0){
+			 rc.broadcastFloat(EXPLORER_X, myLocation.x);
+			 rc.broadcastFloat(EXPLORER_Y, myLocation.y);
+			 rc.broadcastBoolean(IS_A_GOOD_ZONE, true);	 
+		 }
+		 
+		 if(enemyRobots.length>0){
+			 rc.broadcastBoolean(IS_A_GOOD_ZONE, false);
+			 if (rc.canFireSingleShot()) {
+			        rc.fireSingleShot(rc.getLocation().directionTo(enemyRobots[0].location));
+			    }
+			 else{
+				 MapLocation[] myArchon = rc.getInitialArchonLocations(ally);
+				 Direction toMyArchon = myLocation.directionTo(myArchon[0]);
+				 rc.move(toMyArchon);
+			 }
+		 }
+		 
+		 angolo+= 0.2;
+		 Direction dir = new Direction(angolo);
+		 tryMove(dir); 
 			
 	 }
 	 
@@ -81,18 +104,49 @@ public abstract class RobotLogic {
 		
 	 }
 	 
+	 public void totalHelpStrategy() throws GameActionException{
+		 
+		 gameInfo();
+				 
+		 if(rc.readBroadcastFloat(I_HAVE_BEEN_HIT_X)!= 0 && rc.readBroadcastFloat(I_HAVE_BEEN_HIT_Y)!= 0){
+			 if(rc.getType()==RobotType.SOLDIER || rc.getType()==RobotType.TANK){
+				 MapLocation fireZone= new MapLocation(rc.readBroadcastFloat(I_HAVE_BEEN_HIT_X),rc.readBroadcastFloat(I_HAVE_BEEN_HIT_Y));
+				 Direction toFireZone= rc.getLocation().directionTo(fireZone);
+				 tryMove(toFireZone);
+				 if(rc.getLocation().distanceTo(fireZone)<3 && allyRobots.length>=3){
+					 int soldiers=0;
+					 for(int i=0; i<allyRobots.length; i++){
+						 if(allyRobots[i].getType()==RobotType.SOLDIER || allyRobots[i].getType()==RobotType.TANK) soldiers++;
+					 }
+					 
+					 if(soldiers>=3){
+						 rc.broadcastFloat(I_HAVE_BEEN_HIT_X, 0);
+						 rc.broadcastFloat(I_HAVE_BEEN_HIT_Y, 0);
+					 }
+				 }
+			 }
+		 }
+	 }
+	 
 	 /**
-	  * è in pericolo se ci sono nemici nelle vicinanze o proiettili che lo stanno per colpire
+	  * è in pericolo se ci sono nemici nelle vicinanze 
 	  * @return true se è in pericolo
 	  */
 	 boolean isInDanger(){
-		 if(enemyRobots.length>0 || bullets.length>0){
+		 
+		 gameInfo();
+		 
+		 if(enemyRobots.length>0){
 			 return true;
 		 }
 		 else{
 			 return false;
 		 }
 	 }
+	 
+	 public boolean isArchonInDanger() throws GameActionException{
+	    	return rc.readBroadcastBoolean(IS_ARCHON_IN_DANGER);	
+	    }
 	 
     /**
      * Returns a random Direction
@@ -186,7 +240,14 @@ public abstract class RobotLogic {
         return (perpendicularDist <= rc.getType().bodyRadius);
     }
     
-
+    public void gameInfo(){
+		myLocation = rc.getLocation();
+		enemyRobots = rc.senseNearbyRobots(rc.getType().sensorRadius, enemy);
+		allyRobots = rc.senseNearbyRobots(rc.getType().sensorRadius, ally);//per le strategie
+		trees = rc.senseNearbyTrees(rc.getType().sensorRadius);
+		bullets = rc.senseNearbyBullets(rc.getType().bodyRadius+1);
+    }
+   
     public int getNumScout() throws GameActionException{
     	return rc.readBroadcast(NUM_SCOUT);
     }

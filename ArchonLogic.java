@@ -4,7 +4,6 @@ import battlecode.common.*;
 
 public class ArchonLogic extends RobotLogic{
 	
-	
 	public ArchonLogic (RobotController rc){
 		super(rc);
 	}
@@ -21,7 +20,18 @@ public class ArchonLogic extends RobotLogic{
 
                 // Generate a random direction
                 Direction dir = randomDirection();
+                gameInfo();
 
+                rc.broadcastFloat(ARCHON_LOCATION_X, myLocation.x);
+                rc.broadcastFloat(ARCHON_LOCATION_Y, myLocation.y);
+                IsInDanger();
+                
+                if(isInDanger()){
+                	 MapLocation[] myArchon = rc.getInitialArchonLocations(ally);
+                	 Direction toMyInitialLocation = myLocation.directionTo(myArchon[0]);
+                	 tryMove(toMyInitialLocation);
+                }
+               
                 // Randomly attempt to build a gardener in this direction
                 if (shouldBuildGardener()) {
                     rc.hireGardener(dir);
@@ -30,13 +40,6 @@ public class ArchonLogic extends RobotLogic{
 
                 // Move randomly
                 tryMove(dir);
-
-                // Broadcast archon's location for other robots on the team to know
-                if(isInDanger() || rc.getRoundNum()%10==0){
-                MapLocation myLocation = rc.getLocation();
-                rc.broadcast(0,(int)myLocation.x);
-                rc.broadcast(1,(int)myLocation.y);
-                }
 
                 // Clock.yield() makes the robot wait until the next turn, then it will perform this loop again
                 Clock.yield();
@@ -47,8 +50,32 @@ public class ArchonLogic extends RobotLogic{
             }
         }
 	}
+	
 	public boolean shouldBuildGardener() throws GameActionException{
 		return (rc.canHireGardener(randomDirection()) &&  rc.getTeamBullets() >= 200 && !isInDanger() && rc.getRobotCount()<15);
+	}
+	
+	public boolean IsInDanger() throws GameActionException{
+		if(enemyRobots.length>1){
+			int enemySoldiers=0;
+			int allySoldiers=0;
+			for(int i=0; i<enemyRobots.length; i++){
+				if(enemyRobots[i].getType()==RobotType.SOLDIER || enemyRobots[i].getType()==RobotType.TANK || enemyRobots[i].getType()==RobotType.SCOUT) enemySoldiers++;
+			}
+			for(int i=0; i<allyRobots.length; i++){
+				if(allyRobots[i].getType()==RobotType.SOLDIER || allyRobots[i].getType()==RobotType.TANK) allySoldiers++;
+			}
+			
+			if(enemySoldiers>allySoldiers){
+				rc.broadcastBoolean(IS_ARCHON_IN_DANGER, true);
+				return true;
+			}
+			else{
+				rc.broadcastBoolean(IS_ARCHON_IN_DANGER, false);
+				return false;
+			}
+		}
+		return false;
 	}
 }
 

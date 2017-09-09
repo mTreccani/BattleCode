@@ -16,6 +16,8 @@ public class LumberjackLogic extends RobotLogic {
         // The code you want your robot to perform every round should be in this loop
         
             while(true){
+            	
+            	int birthRound=rc.getRoundNum();
             // Try/catch blocks stop unhandled exceptions, which cause your robot to explode
             try {
 
@@ -53,7 +55,7 @@ public class LumberjackLogic extends RobotLogic {
                     }
                 }
 
-                if(rc.getHealth()<50) setNumLumberjack(-1);
+                if(rc.getHealth()<RobotType.LUMBERJACK.maxHealth/DEATHDIVIDER && rc.getRoundNum()-birthRound< REGENERATIONROUNDS) setNumLumberjack(-1);
                 // Clock.yield() makes the robot wait until the next turn, then it will perform this loop again
                 Clock.yield();
 

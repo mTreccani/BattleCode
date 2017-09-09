@@ -13,6 +13,8 @@ public class SoldierLogic extends RobotLogic{
 	public void run() throws GameActionException{
 		
 		while(true){
+			
+			int birthRound=rc.getRoundNum();
 		    // Try/catch blocks stop unhandled exceptions, which cause your robot to explode
 	        try {
 	
@@ -49,7 +51,7 @@ public class SoldierLogic extends RobotLogic{
 	                	tryMove(randomDirection());
 	            }
 	            
-	            if(rc.getHealth()<50) setNumSoldier(-1);
+	            if(rc.getHealth()<RobotType.SOLDIER.maxHealth/DEATHDIVIDER && rc.getRoundNum()-birthRound< REGENERATIONROUNDS) setNumSoldier(-1);
 	            // Clock.yield() makes the robot wait until the next turn, then it will perform this loop again
 	            Clock.yield();
 	

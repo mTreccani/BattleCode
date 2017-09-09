@@ -7,7 +7,7 @@ public class ScoutLogic extends RobotLogic{
 	
 	Team enemy = rc.getTeam().opponent();
 	
-	public ScoutLogic (RobotController rc){
+	public ScoutLogic (RobotController rc) throws GameActionException{
 		super(rc);
 	}
 	
@@ -19,21 +19,25 @@ public class ScoutLogic extends RobotLogic{
 			int birthRound=rc.getRoundNum();
 	        // Try/catch blocks stop unhandled exceptions, which cause your robot to explode
 	        try {
+	        	
+	        	gameInfo();
 	
-	        	if(getNumScout()<=2 && rc.getRoundNum()-birthRound < 200){
+	        	if(rc.getRoundNum()-birthRound < 400){
 	        		exploreStrategy();
-	        		if(rc.getHealth()< RobotType.SCOUT.maxHealth/5 && rc.getRoundNum() - birthRound >= 20) setNumScout(-1);
+	        		if(rc.getHealth()< RobotType.SCOUT.maxHealth/DEATHDIVIDER && rc.getRoundNum() - birthRound >= REGENERATIONROUNDS) setNumScout(-1);
 	        		Clock.yield();
 	        	}
-	        	if(getNumScout()>2 && rc.getRoundNum()-birthRound < 400 ){
+	        	if(rc.getRoundNum()-birthRound < 800 ){
 	        		runnerStrategy();
-	        		if(rc.getHealth()< RobotType.SCOUT.maxHealth/5 && rc.getRoundNum() - birthRound >= 20) setNumScout(-1);
+	        		if(rc.getHealth()< RobotType.SCOUT.maxHealth/DEATHDIVIDER && rc.getRoundNum() - birthRound >= REGENERATIONROUNDS) setNumScout(-1);
 	        		Clock.yield();
 	        	}
 	        	else{
 	        		basicScout();
-	        		if(rc.getHealth()< RobotType.SCOUT.maxHealth/5 && rc.getRoundNum() - birthRound >= 20) setNumScout(-1);
+	        		if(rc.getHealth()< RobotType.SCOUT.maxHealth/DEATHDIVIDER && rc.getRoundNum() - birthRound >= REGENERATIONROUNDS) setNumScout(-1);
 	        	}
+	        	
+	        	System.out.println(getNumScout());
 	
 	        } catch (Exception e) {
 	            System.out.println("Soldier Exception");
