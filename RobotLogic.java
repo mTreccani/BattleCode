@@ -16,6 +16,7 @@ public abstract class RobotLogic {
 	 private float angolo;
 	 public static final int DEATHDIVIDER=4;
 	 public static final int REGENERATIONROUNDS=20;
+	 public static final int VIKING_NUM_SOLDIER = 3;
 	 
 	 //broadcast channels
 	 public static final int NUM_SCOUT=50;
@@ -62,18 +63,7 @@ public abstract class RobotLogic {
 	 }
 	
 	 public void exploreStrategy() throws GameActionException{
-		 /*
-			 MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy);
-			 MapLocation[] myArchon = rc.getInitialArchonLocations(ally);
-			 if(rc.senseNearbyRobots(rc.getType().sensorRadius).length<1){
-				 Direction toMyArchon = myLocation.directionTo(myArchon[0]);
-				 rc.move(toMyArchon);
-			 }
-			 else{
-				 Direction toEnemyArchon = myLocation.directionTo(enemyArchon[0]);
-				 rc.move(toEnemyArchon);
-			 }
-			 */
+		 
 		 gameInfo();
 		 
 		 if(trees.length>0){
@@ -102,6 +92,28 @@ public abstract class RobotLogic {
 	 
 	 public void vikingStrategy() throws GameActionException{
 		
+		gameInfo();
+		
+		MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy); 
+		float allyArchonX = rc.readBroadcastFloat(ARCHON_LOCATION_X);
+		float allyArchonY = rc.readBroadcastFloat(ARCHON_LOCATION_Y);
+		MapLocation allyArchon = new MapLocation(allyArchonX,allyArchonY);
+		int nearEnemy = enemyRobots.length;	
+		boolean nearEnemyArchon = myLocation.isWithinDistance(enemyArchon[0], RobotType.ARCHON.sensorRadius); 
+		boolean nearAllyArchon = myLocation.isWithinDistance(allyArchon, RobotType.ARCHON.sensorRadius);
+		int numSoldier = getNumSoldier();
+		
+		if(numSoldier>=VIKING_NUM_SOLDIER && nearEnemy == 0){
+			Direction toEnemyArchon = myLocation.directionTo(enemyArchon[0]);
+			tryMove(toEnemyArchon);
+		}
+		else if(numSoldier<VIKING_NUM_SOLDIER && !nearAllyArchon){
+			Direction toAllyArchon = myLocation.directionTo(allyArchon);
+			tryMove(toAllyArchon);
+		}
+		else if(nearEnemyArchon || nearEnemy != 0 || nearAllyArchon){
+			runnerStrategy();
+		}
 	 }
 	 
 	 public void totalHelpStrategy() throws GameActionException{
@@ -129,8 +141,8 @@ public abstract class RobotLogic {
 	 }
 	 
 	 /**
-	  * è in pericolo se ci sono nemici nelle vicinanze 
-	  * @return true se è in pericolo
+	  * Ã¨ in pericolo se ci sono nemici nelle vicinanze 
+	  * @return true se Ã¨ in pericolo
 	  */
 	 boolean isInDanger(){
 		 
