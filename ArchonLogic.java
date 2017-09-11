@@ -6,12 +6,17 @@ public class ArchonLogic extends RobotLogic{
 	
 	public ArchonLogic (RobotController rc){
 		super(rc);
+		
 	}
 	
 	@Override
 	public void run() throws GameActionException {
         System.out.println("I'm an archon!");
-
+        
+        rc.broadcastInt(IMPERO_ROMANO_1, 0);
+        rc.broadcastInt(IMPERO_ROMANO_2, 0);
+        rc.broadcastInt(IMPERO_ROMANO_3, 0);
+        
         // The code you want your robot to perform every round should be in this loop
         while (true) {
 
@@ -78,4 +83,6 @@ public class ArchonLogic extends RobotLogic{
 		return false;
 	}
 }
+
+
 
