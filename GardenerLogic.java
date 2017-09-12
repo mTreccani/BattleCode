@@ -6,33 +6,47 @@ public class GardenerLogic extends RobotLogic{
 	private static final int MINTREES=0;
 	private static final int TREEBULLET=100;
 	private static final int MAXTREES=4;
-	private static final int REGENERATIONROUNDS=20;
-	private static final int DEATHDIVIDER=5;
 	private static final int MAXSCOUTS=3;
-	private static final int MAXSOLDIERS=3;
+	private static final int MAXSOLDIERS=5;
 	private static final int MAXLUMBERJACKS=3;
 	private static final int MINLUMBERJACKS=0;
 	private static final int TREESLUMBERJACK=2;
 	private static final int ROUNDLUMBERJACK=200;
 	private static final int ROUNDTANK=600;
 	private static final int MINTANKS=0;
-	boolean isAlive;
-	int birthRound;
+	
+	public float distanceFromArchon;
+	public MapLocation lastKnownArchonLocation;
 	
 	public GardenerLogic (RobotController rc){
 		super(rc);
-		birthRound=rc.getRoundNum();
-		isAlive = true;
 	}
 	
 	@Override
 	public void run() throws GameActionException{
+		
+		int birthRound=rc.getRoundNum();
+		boolean isDead=false;
+		
 		while(true){
+			
 			try {
-	            // Listen for home archon's location
-	            int xPos = rc.readBroadcast(0);
-	            int yPos = rc.readBroadcast(1);
-	            MapLocation archonLoc = new MapLocation(xPos,yPos);
+	            
+				gameInfo();
+				
+				lastKnownArchonLocation= new MapLocation(rc.readBroadcastFloat(ARCHON_LOCATION_X), rc.readBroadcastFloat(ARCHON_LOCATION_Y));
+	            distanceFromArchon=myLocation.distanceTo(lastKnownArchonLocation);
+	            
+	            if(distanceFromArchon>25 && getNumGardener()<2){
+	            	Direction toMyArchon = myLocation.directionTo(lastKnownArchonLocation);
+	            	tryMove(toMyArchon);
+	            }
+	            
+	            if(rc.readBroadcast(FARMING_GARDENER)==0 || rc.readBroadcast(FARMING_GARDENER)==rc.getID()){
+                	rc.broadcast(FARMING_GARDENER, rc.getID());
+                	farmStrategy();
+                }
+	            
 	            TreeInfo[] trees= rc.senseNearbyTrees(RobotType.GARDENER.sensorRadius);
 	            // Generate a random direction
 	            Direction dir = randomDirection();
@@ -47,30 +61,27 @@ public class GardenerLogic extends RobotLogic{
 	            }
 	            if (shouldBuildSoldier()) {
 	                rc.buildRobot(RobotType.SOLDIER, dir);
-	                setNumSoldier(+1);
 	            } 
 	            if (shouldBuildScout()) {
 	                rc.buildRobot(RobotType.SCOUT, dir);
-	                setNumScout(+1);
 	            } 
 	            if (shouldBuildLumberjack()) {
-	                rc.buildRobot(RobotType.LUMBERJACK, dir);
-	                setNumLumberjack(+1);
+	                rc.buildRobot(RobotType.LUMBERJACK, dir);;
 	            }
 	            if (shouldBuildTank()) {
 	                rc.buildRobot(RobotType.TANK, dir);
-	                setNumSoldier(+1);
 	            }
 	            if (rc.getTeamBullets()>TREEBULLET && trees.length<MAXTREES && rc.canPlantTree(dir)){
 	            	rc.plantTree(dir);
 	            }
+	            
 	            // Move randomly
 	            tryMove(randomDirection());
-	            if(isAlive){
-	            	if(isDead(birthRound)){
-		            	setNumGardener(-1);
-		            	isAlive = false;
-		            }	
+	            
+	            if(!isDead){
+	            	if(isDead(birthRound)) setNumGardener(-1);
+	            	if(rc.readBroadcast(FARMING_GARDENER)==rc.getID()) rc.broadcast(FARMING_GARDENER, 0);
+	            	isDead=true;
 	            }
 	
 	            // Clock.yield() makes the robot wait until the next turn, then it will perform this loop again

@@ -5,23 +5,20 @@ import battlecode.common.*;
 
 public class LumberjackLogic extends RobotLogic {
 
-	boolean isAlive;
-	int birthRound;
-	
 	public LumberjackLogic (RobotController rc){
 		super(rc);
-		birthRound=rc.getRoundNum();
-		isAlive = true;
 	}
 	
 	@Override
 	public void run() throws GameActionException{
-		Team enemy = rc.getTeam().opponent();
+	
+		int birthRound=rc.getRoundNum();
+    	boolean isDead=false;
+    	setNumLumberjack(+1);
 	       
         // The code you want your robot to perform every round should be in this loop
         
             while(true){
-            	
             	
             // Try/catch blocks stop unhandled exceptions, which cause your robot to explode
             try {
@@ -30,6 +27,11 @@ public class LumberjackLogic extends RobotLogic {
                 RobotInfo[] robots = rc.senseNearbyRobots(RobotType.LUMBERJACK.bodyRadius+GameConstants.LUMBERJACK_STRIKE_RADIUS, enemy);
                 TreeInfo[] trees = rc.senseNearbyTrees(RobotType.LUMBERJACK.sensorRadius);
                 
+                
+                if(rc.readBroadcast(FARMING_LUMBERJACK)==0 || rc.readBroadcast(FARMING_LUMBERJACK)==rc.getID()){
+                	rc.broadcast(FARMING_LUMBERJACK, rc.getID());
+                	farmStrategy();
+                }
                 
                 if(robots.length > 0 && !rc.hasAttacked()) {
                     // Use strike() to hit all nearby robots!
@@ -60,12 +62,11 @@ public class LumberjackLogic extends RobotLogic {
                     }
                 }
 
-                if(isAlive){
-	            	if(isDead(birthRound)){
-		            	setNumLumberjack(-1);
-		            	isAlive = false;
-		            }	
-	            }
+                if(!isDead){
+                	if(isDead(birthRound)) setNumLumberjack(-1);
+                	if(rc.readBroadcast(FARMING_LUMBERJACK)==rc.getID()) rc.broadcast(FARMING_LUMBERJACK, 0);
+                	isDead=true;
+                }
                 // Clock.yield() makes the robot wait until the next turn, then it will perform this loop again
                 Clock.yield();
 

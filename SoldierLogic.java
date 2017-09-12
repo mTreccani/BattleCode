@@ -4,51 +4,78 @@ import battlecode.common.*;
 
 public class SoldierLogic extends RobotLogic{
 	
-	Team enemy = rc.getTeam().opponent();
-	int birthRound;
-	boolean isAlive;
-	
 	public SoldierLogic (RobotController rc){
 		super(rc);
-		birthRound=rc.getRoundNum();
-		isAlive = true;
-		
 	}
 	
 	@Override
 	public void run() throws GameActionException{
 		
+		int birthRound=rc.getRoundNum();
+		boolean isDead=false;
+		setNumSoldier(+1);
+		
 		while(true){
-			
 		    // Try/catch blocks stop unhandled exceptions, which cause your robot to explode
 	        try {
-
-	            // See if there are any nearby enemy robots
+	
 	            
-	            int id1 = rc.readBroadcastInt(IMPERO_ROMANO_1);	            
-				int id2 = rc.readBroadcastInt(IMPERO_ROMANO_2);
-				int id3 = rc.readBroadcastInt(IMPERO_ROMANO_3);
-				if(id1 == 0 && id1 != rc.getID()){
-					rc.broadcastInt(IMPERO_ROMANO_1, rc.getID());
-				}
-				else if(id2 == 0 && id1 != rc.getID() && id2 != rc.getID()){
-					rc.broadcastInt(IMPERO_ROMANO_2, rc.getID());
-				}
-				else if(id3 == 0 && id1 != rc.getID() && id2 != rc.getID() && id3 != rc.getID()){
-					rc.broadcastInt(IMPERO_ROMANO_3, rc.getID());
-				}
-				
-	            imperoRomano();
-	            
-	            shoot();
-	            
-	            if(isAlive){
-	            	if(isDead(birthRound)){
-		            	setNumSoldier(-1);
-		            	isAlive = false;
-		            }	
+	        	/*if(getNumSoldier()>3){
+	            	if(rc.readBroadcast(ROMAN_EMPIRE_1)==0) {
+	            		rc.broadcast(VIKING_ONE, rc.getID());
+	            		System.out.println("FIRST ROMAN  " + rc.getID());
+	            	}
+	            	else if (rc.readBroadcast(ROMAN_EMPIRE_2)==0 && rc.readBroadcast(ROMAN_EMPIRE_1)!=rc.getID()){
+	            		rc.broadcast(ROMAN_EMPIRE_2, rc.getID());
+	            		System.out.println("SECOND ROMAN  " + rc.getID());
+	            	}
+	            	else if (rc.readBroadcast(ROMAN_EMPIRE_3)==0 && rc.readBroadcast(ROMAN_EMPIRE_1)!=rc.getID() && rc.readBroadcast(ROMAN_EMPIRE_2)!=rc.getID()) {
+	            		rc.broadcast(ROMAN_EMPIRE_3, rc.getID());
+	            		System.out.println("THIRD ROMAN  " + rc.getID());
+	            	}
+	            }*/
+	        	
+	            if(getNumSoldier()>3){
+	            	if(rc.readBroadcast(VIKING_1)==0) {
+	            		rc.broadcast(VIKING_1, rc.getID());
+	            		System.out.println("FIRST VIKING  " + rc.getID());
+	            	}
+	            	else if (rc.readBroadcast(VIKING_2)==0 && rc.readBroadcast(VIKING_1)!=rc.getID()){
+	            		rc.broadcast(VIKING_2, rc.getID());
+	            		System.out.println("SECOND VIKING  " + rc.getID());
+	            	}
+	            	else if (rc.readBroadcast(VIKING_3)==0 && rc.readBroadcast(VIKING_1)!=rc.getID() && rc.readBroadcast(VIKING_2)!=rc.getID()) {
+	            		rc.broadcast(VIKING_3, rc.getID());
+	            		System.out.println("THIRD VIKING  " + rc.getID());
+	            	}
 	            }
 	            
+	            if(rc.readBroadcast(VIKING_1)==rc.getID() || rc.readBroadcast(VIKING_2)==rc.getID() || rc.readBroadcast(VIKING_3)==rc.getID()){
+	            	vikingStrategy();
+	            }
+	            
+	            tryShoot();
+	            
+	            if(enemyRobots.length > 0) {
+	                MapLocation myLocation = rc.getLocation();
+	                MapLocation enemyLocation = enemyRobots[0].getLocation();
+	                Direction toEnemy = myLocation.directionTo(enemyLocation);
+	
+	                tryMove(toEnemy);
+	            }
+	            else{
+	                	tryMove(randomDirection());
+	            }
+	            
+	            if(!isDead){
+	            	
+	            	if(isDead(birthRound)){
+	            		
+	            		setNumSoldier(-1);
+	            	    whichSoldierIsDead();
+	            		isDead=true;
+	            	}
+	            }
 	            
 	            // Clock.yield() makes the robot wait until the next turn, then it will perform this loop again
 	            Clock.yield();
@@ -59,5 +86,27 @@ public class SoldierLogic extends RobotLogic{
 	        }
 	    }
 	}
-	
+
+	public void whichSoldierIsDead() throws GameActionException {
+		
+		if(rc.readBroadcast(VIKING_1)==rc.getID()) {
+			rc.broadcast(VIKING_1, 0);
+		}
+		if(rc.readBroadcast(VIKING_1)==rc.getID()) {
+			rc.broadcast(VIKING_2, 0);
+		}
+		if(rc.readBroadcast(VIKING_1)==rc.getID()) {
+			rc.broadcast(VIKING_3, 0);
+		}
+		if(rc.readBroadcast(ROMAN_EMPIRE_1)==rc.getID()) {
+			rc.broadcast(ROMAN_EMPIRE_1, 0);
+		}
+		if(rc.readBroadcast(ROMAN_EMPIRE_2)==rc.getID()) {
+			rc.broadcast(ROMAN_EMPIRE_2, 0);
+		}
+		if(rc.readBroadcast(ROMAN_EMPIRE_3)==rc.getID()) {
+			rc.broadcast(ROMAN_EMPIRE_3, 0);
+		}
+	}
 }
+
