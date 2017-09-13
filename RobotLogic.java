@@ -212,42 +212,24 @@ public abstract class RobotLogic {
 		
 		gameInfo();
 		
-		/*MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy); 
+		MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy); 
 		float allyArchonX = rc.readBroadcastFloat(ARCHON_LOCATION_X);
 		float allyArchonY = rc.readBroadcastFloat(ARCHON_LOCATION_Y);
 		MapLocation allyArchon = new MapLocation(allyArchonX,allyArchonY);
 		int nearEnemy = enemyRobots.length;	
 		boolean nearEnemyArchon = myLocation.isWithinDistance(enemyArchon[0], RobotType.ARCHON.sensorRadius); 
 		boolean nearAllyArchon = myLocation.isWithinDistance(allyArchon, RobotType.ARCHON.sensorRadius);
-		int numSoldier = getNumSoldier();
 		
-		if(numSoldier>=VIKING_NUM_SOLDIER && nearEnemy == 0){
+		if(rc.readBroadcast(VIKING_1)!=0 && rc.readBroadcast(VIKING_2)!=0 && rc.readBroadcast(VIKING_3)!=0 && rc.getRoundNum()%1000<500  && nearEnemy == 0){
 			Direction toEnemyArchon = myLocation.directionTo(enemyArchon[0]);
 			tryMove(toEnemyArchon);
 		}
-		else if(numSoldier<VIKING_NUM_SOLDIER && !nearAllyArchon){
+		else if((rc.readBroadcast(VIKING_1)==0 || rc.readBroadcast(VIKING_2)==0 || rc.readBroadcast(VIKING_3)==0) && !nearAllyArchon){
 			Direction toAllyArchon = myLocation.directionTo(allyArchon);
 			tryMove(toAllyArchon);
 		}
 		else if(nearEnemyArchon || nearEnemy != 0 || nearAllyArchon){
 			runnerStrategy();
-		}*/
-		
-		MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy); 
-		Direction toEnemyArchon = myLocation.directionTo(enemyArchon[0]);
-		float allyArchonX = rc.readBroadcastFloat(ARCHON_LOCATION_X);
-		float allyArchonY = rc.readBroadcastFloat(ARCHON_LOCATION_Y);
-		MapLocation allyArchon = new MapLocation(allyArchonX,allyArchonY);
-		Direction toAllyArchon = myLocation.directionTo(allyArchon);
-		
-		if(rc.readBroadcast(VIKING_1)!=0 && rc.readBroadcast(VIKING_2)!=0 && rc.readBroadcast(VIKING_3)!=0 && rc.getRoundNum()%1000<500){
-			
-			tryMove(toEnemyArchon);
-			if(rc.getLocation().distanceTo(enemyArchon[0])<10) tryMove(randomDirection());
-		}
-		else{
-			
-			tryMove(toAllyArchon);
 		}
 	 }
 	 
