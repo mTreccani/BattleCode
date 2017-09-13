@@ -4,7 +4,7 @@ import battlecode.common.*;
 
 public class ArchonLogic extends RobotLogic{
 	
-	public ArchonLogic (RobotController rc){
+	public ArchonLogic (RobotController rc) throws GameActionException{
 		super(rc);
 	}
 	
@@ -12,19 +12,28 @@ public class ArchonLogic extends RobotLogic{
 	public void run() throws GameActionException {
         System.out.println("I'm an archon!");
 
+        rc.broadcast(NUM_SCOUT, 0);
+        rc.broadcast(NUM_SOLDIER, 0);
+        rc.broadcast(NUM_LUMBERJACK, 0);
+        rc.broadcast(NUM_TANK, 0);
+        rc.broadcast(NUM_GARDENER, 0);
         rc.broadcast(VIKING_1, 0);
         rc.broadcast(VIKING_2, 0);
         rc.broadcast(VIKING_3, 0);
         rc.broadcast(I_HAVE_BEEN_HIT_X, 0);
         rc.broadcast(I_HAVE_BEEN_HIT_Y, 0);
-        rc.broadcastInt(ROMAN_EMPIRE_1, 0);
-        rc.broadcastInt(ROMAN_EMPIRE_2, 0);
-        rc.broadcastInt(ROMAN_EMPIRE_3, 0);
+        rc.broadcast(ROMAN_EMPIRE_1, 0);
+        rc.broadcast(ROMAN_EMPIRE_2, 0);
+        rc.broadcast(ROMAN_EMPIRE_3, 0);
+        rc.broadcast(FARMER_X, 0);
+        rc.broadcast(FARMER_Y, 0);
         rc.broadcast(FARMING_LUMBERJACK,0);
         rc.broadcast(FARMING_LUMBERJACK,0);
+        rc.broadcastBoolean(FARM_ZONE, false);
         rc.broadcast(SOLAR_1, 0);
         rc.broadcast(SOLAR_2, 0);
         rc.broadcast(SOLAR_3, 0);
+        rc.broadcastBoolean(IS_A_GOOD_ROAD, false);
 
         
         // The code you want your robot to perform every round should be in this loop
@@ -34,27 +43,29 @@ public class ArchonLogic extends RobotLogic{
             try {
 
                 // Generate a random direction
-                Direction dir = randomDirection();
+                
                 gameInfo();
 
                 rc.broadcastFloat(ARCHON_LOCATION_X, myLocation.x);
                 rc.broadcastFloat(ARCHON_LOCATION_Y, myLocation.y);
-                IsInDanger();
+                archonInDanger();
                 
                 if(isInDanger()){
-                	 MapLocation[] myArchon = rc.getInitialArchonLocations(ally);
+                	 /*MapLocation[] myArchon = rc.getInitialArchonLocations(ally);
                 	 Direction toMyInitialLocation = myLocation.directionTo(myArchon[0]);
-                	 tryMove(toMyInitialLocation);
+                	 tryMove(toMyInitialLocation);*/
+                	matrixStrategy();
                 }
                
                 // Randomly attempt to build a gardener in this direction
                 if (shouldBuildGardener()) {
-                    rc.hireGardener(dir);
+                    rc.hireGardener(randomDirection());
                     setNumGardener(+1);
                 }
-
-                // Move randomly
-                tryMove(dir);
+                
+                angolo+=0.5;
+                Direction dir = new Direction(angolo);
+       		    tryMove(dir); 
 
                 // Clock.yield() makes the robot wait until the next turn, then it will perform this loop again
                 Clock.yield();
@@ -67,16 +78,16 @@ public class ArchonLogic extends RobotLogic{
 	}
 	
 	public boolean shouldBuildGardener() throws GameActionException{
-		return (rc.canHireGardener(randomDirection()) &&  rc.getTeamBullets() >= 200 && !isInDanger() && rc.getRobotCount()<15);
+		return (rc.canHireGardener(randomDirection()) &&  rc.getTeamBullets() >= 200 && !isInDanger() && getNumGardener()<=2);
 	}
 	
-	public void IsInDanger() throws GameActionException{
+	public void archonInDanger() throws GameActionException{
 		
-		if(enemyRobots.length>1){
+		if(enemyRobots.length>0){
 			int enemySoldiers=0;
 			int allySoldiers=0;
 			for(int i=0; i<enemyRobots.length; i++){
-				if(enemyRobots[i].getType()==RobotType.SOLDIER || enemyRobots[i].getType()==RobotType.TANK || enemyRobots[i].getType()==RobotType.SCOUT) enemySoldiers++;
+				if(enemyRobots[i].getType()==RobotType.SOLDIER || enemyRobots[i].getType()==RobotType.TANK || enemyRobots[i].getType()==RobotType.LUMBERJACK) enemySoldiers++;
 			}
 			for(int j=0; j<allyRobots.length; j++){
 				if(allyRobots[j].getType()==RobotType.SOLDIER || allyRobots[j].getType()==RobotType.TANK) allySoldiers++;

@@ -3,7 +3,7 @@ import battlecode.common.*;
 
 public class GardenerLogic extends RobotLogic{
 	private static final int NO_SCOUT_NEEDED=1500;
-	private static final int MINTREES=0;
+	private static final int NO_TREES=0;
 	private static final int TREEBULLET=100;
 	private static final int MAXTREES=4;
 	private static final int MAXSCOUTS=3;
@@ -18,8 +18,9 @@ public class GardenerLogic extends RobotLogic{
 	public float distanceFromArchon;
 	public MapLocation lastKnownArchonLocation;
 	
-	public GardenerLogic (RobotController rc){
+	public GardenerLogic (RobotController rc) throws GameActionException{
 		super(rc);
+		//setNumGardener(+1);
 	}
 	
 	@Override
@@ -34,24 +35,15 @@ public class GardenerLogic extends RobotLogic{
 	            
 				gameInfo();
 				
-				lastKnownArchonLocation= new MapLocation(rc.readBroadcastFloat(ARCHON_LOCATION_X), rc.readBroadcastFloat(ARCHON_LOCATION_Y));
+				/*lastKnownArchonLocation= new MapLocation(rc.readBroadcastFloat(ARCHON_LOCATION_X), rc.readBroadcastFloat(ARCHON_LOCATION_Y));
 	            distanceFromArchon=myLocation.distanceTo(lastKnownArchonLocation);
 	            
 	            if(distanceFromArchon>25 && getNumGardener()<2){
 	            	Direction toMyArchon = myLocation.directionTo(lastKnownArchonLocation);
 	            	tryMove(toMyArchon);
-	            }
+	            }*/
 	            
-	            if(rc.readBroadcast(FARMING_GARDENER)==0 || rc.readBroadcast(FARMING_GARDENER)==rc.getID()){
-                	rc.broadcast(FARMING_GARDENER, rc.getID());
-                	farmStrategy();
-                }
-	            
-	            TreeInfo[] trees= rc.senseNearbyTrees(RobotType.GARDENER.sensorRadius);
-	            // Generate a random direction
-	            Direction dir = randomDirection();
-	            if (trees.length > MINTREES && !isInDanger()){
-	            	MapLocation myLocation=rc.getLocation();
+				if (trees.length > NO_TREES && !isInDanger() && rc.readBroadcast(FARMING_GARDENER)!=rc.getID()){
 	            	MapLocation treeLocation=trees[0].getLocation();
 	            	Direction toTree=myLocation.directionTo(treeLocation);
 	            	tryMove(toTree);
@@ -59,24 +51,46 @@ public class GardenerLogic extends RobotLogic{
 	            		rc.water(treeLocation);
 	            	}
 	            }
+				if(isInDanger()){
+					rc.broadcastFloat(I_HAVE_BEEN_HIT_X, myLocation.x);
+					rc.broadcastFloat(I_HAVE_BEEN_HIT_Y, myLocation.y);
+					matrixStrategy();
+				}
+				
+	            if(rc.readBroadcastBoolean(FARM_ZONE) && (rc.readBroadcast(FARMING_GARDENER)==0 || rc.readBroadcast(FARMING_GARDENER)==rc.getID())){
+                	rc.broadcast(FARMING_GARDENER, rc.getID());
+                	farmStrategy();
+                }
+	           
+	            Direction dir = randomDirection();
+	            
+	            if(getNumLumberjack()<1){
+	            	rc.canBuildRobot(RobotType.LUMBERJACK, randomDirection());
+	            	rc.buildRobot(RobotType.LUMBERJACK, dir);
+                    setNumLumberjack(+1);
+	            }
 	            if (shouldBuildSoldier()) {
 	                rc.buildRobot(RobotType.SOLDIER, dir);
+	                setNumSoldier(+1);
 	            } 
 	            if (shouldBuildScout()) {
 	                rc.buildRobot(RobotType.SCOUT, dir);
+	                setNumScout(+1);
 	            } 
 	            if (shouldBuildLumberjack()) {
-	                rc.buildRobot(RobotType.LUMBERJACK, dir);;
+	                rc.buildRobot(RobotType.LUMBERJACK, dir);
+	                setNumLumberjack(+1);
 	            }
 	            if (shouldBuildTank()) {
 	                rc.buildRobot(RobotType.TANK, dir);
+	                setNumTank(+1);
 	            }
 	            if (rc.getTeamBullets()>TREEBULLET && trees.length<MAXTREES && rc.canPlantTree(dir)){
 	            	rc.plantTree(dir);
 	            }
 	            
 	            // Move randomly
-	            tryMove(randomDirection());
+	            tryMove(dir);
 	            
 	            if(!isDead){
 	            	if(isDead(birthRound)) setNumGardener(-1);

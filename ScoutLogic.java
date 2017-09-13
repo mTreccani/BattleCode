@@ -7,8 +7,9 @@ public class ScoutLogic extends RobotLogic{
 	
 	Team enemy = rc.getTeam().opponent();
 	
-	public ScoutLogic (RobotController rc) {
+	public ScoutLogic (RobotController rc) throws GameActionException{
 		super(rc);
+		//setNumScout(+1);
 	}
 	
 	@Override
@@ -16,7 +17,6 @@ public class ScoutLogic extends RobotLogic{
 		
 		int birthRound=rc.getRoundNum();
 		boolean isDead=false;
-		setNumScout(+1);
 		
 		while(true){
 		
@@ -25,18 +25,16 @@ public class ScoutLogic extends RobotLogic{
 	        	
 	        	gameInfo();
 	
-	        	if(rc.getRoundNum()-birthRound < 400){
-	        		exploreStrategy();
-	        	}
-	        	if(rc.getRoundNum()-birthRound < 800 ){
+	        	if(rc.getRoundNum()-birthRound < 70 || (rc.getRoundNum()-birthRound > 300 && rc.getRoundNum()-birthRound <= 350)){
 	        		runnerStrategy();
 	        	}
 	        	else{
-	        		basicScout();
+	        		exploreStrategy();
 	        	}
 	        	
 	        	if(!isDead){
 	        		if(isDead(birthRound)) setNumScout(-1);
+	        		whichScoutIsDead();
 	        		isDead=true;
 	        	}
 	        	
@@ -50,36 +48,16 @@ public class ScoutLogic extends RobotLogic{
 		}
 	}
 
-	public void basicScout() throws GameActionException {
-		// See if there are any nearby enemy robots
-		RobotInfo[] robots = rc.senseNearbyRobots(RobotType.SCOUT.sensorRadius, enemy);
-		TreeInfo[] trees = rc.senseNearbyTrees(RobotType.SCOUT.sensorRadius);
-		
-		
-		// If there is one...
-		if (robots.length>0) {
-		    // And we have enough bullets, and haven't attacked yet this turn...
-		    if (rc.canFireSingleShot()) {
-		        // ...Then fire a bullet in the direction of the enemy.
-		        rc.fireSingleShot(rc.getLocation().directionTo(robots[0].location));
-		    }
+	public void whichScoutIsDead() throws GameActionException {
+		if(rc.readBroadcast(SOLAR_1)==rc.getID()) {
+			rc.broadcast(SOLAR_1, 0);
 		}
-		
-		if(robots.length > 0 || trees.length>0) {
-		    //MapLocation myLocation = rc.getLocation();
-		    MapLocation enemyLocation = robots[0].getLocation();
-		    MapLocation treeLocation = trees[0].getLocation();
-		    
-		    //broadcast enemy
-		    rc.broadcast(0,(int)enemyLocation.x);
-		    rc.broadcast(1,(int)enemyLocation.y);  
-		    //broadcast tree
-		    rc.broadcast(2,(int)treeLocation.x);
-		    rc.broadcast(3,(int)treeLocation.y); 
+		if(rc.readBroadcast(SOLAR_2)==rc.getID()) {
+			rc.broadcast(SOLAR_2, 0);
 		}
-		
-		// Move randomly
-		tryMove(randomDirection());
+		if(rc.readBroadcast(SOLAR_3)==rc.getID()) {
+			rc.broadcast(SOLAR_3, 0);
+		}
 	}
 }
 

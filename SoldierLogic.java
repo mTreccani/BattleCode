@@ -4,8 +4,9 @@ import battlecode.common.*;
 
 public class SoldierLogic extends RobotLogic{
 	
-	public SoldierLogic (RobotController rc){
+	public SoldierLogic (RobotController rc) throws GameActionException{
 		super(rc);
+		//setNumSoldier(+1);
 	}
 	
 	@Override
@@ -13,13 +14,12 @@ public class SoldierLogic extends RobotLogic{
 		
 		int birthRound=rc.getRoundNum();
 		boolean isDead=false;
-		setNumSoldier(+1);
 		
 		while(true){
 		    // Try/catch blocks stop unhandled exceptions, which cause your robot to explode
 	        try {
 	
-	            
+	            gameInfo();
 	        	/*if(getNumSoldier()>3){
 	            	if(rc.readBroadcast(ROMAN_EMPIRE_1)==0) {
 	            		rc.broadcast(VIKING_ONE, rc.getID());
@@ -35,20 +35,23 @@ public class SoldierLogic extends RobotLogic{
 	            	}
 	            }*/
 	        	
-	            if(getNumSoldier()>3){
-	            	if(rc.readBroadcast(VIKING_1)==0) {
-	            		rc.broadcast(VIKING_1, rc.getID());
-	            		System.out.println("FIRST VIKING  " + rc.getID());
-	            	}
-	            	else if (rc.readBroadcast(VIKING_2)==0 && rc.readBroadcast(VIKING_1)!=rc.getID()){
-	            		rc.broadcast(VIKING_2, rc.getID());
-	            		System.out.println("SECOND VIKING  " + rc.getID());
-	            	}
-	            	else if (rc.readBroadcast(VIKING_3)==0 && rc.readBroadcast(VIKING_1)!=rc.getID() && rc.readBroadcast(VIKING_2)!=rc.getID()) {
-	            		rc.broadcast(VIKING_3, rc.getID());
-	            		System.out.println("THIRD VIKING  " + rc.getID());
-	            	}
-	            }
+	        	totalHelpStrategy();
+	        	
+	           
+            	if(rc.readBroadcast(VIKING_1)==0) {
+            		rc.broadcast(VIKING_1, rc.getID());
+            		System.out.println("FIRST VIKING  " + rc.getID());
+            	}
+            	else if (rc.readBroadcast(VIKING_2)==0 && rc.readBroadcast(VIKING_1)!=rc.getID()){
+            		rc.broadcast(VIKING_2, rc.getID());
+            		System.out.println("SECOND VIKING  " + rc.getID());
+            	}
+            	else if (rc.readBroadcast(VIKING_3)==0 && rc.readBroadcast(VIKING_1)!=rc.getID() && rc.readBroadcast(VIKING_2)!=rc.getID()) {
+            		rc.broadcast(VIKING_3, rc.getID());
+            		System.out.println("THIRD VIKING  " + rc.getID());
+            	}
+            
+            
 	            
 	            if(rc.readBroadcast(VIKING_1)==rc.getID() || rc.readBroadcast(VIKING_2)==rc.getID() || rc.readBroadcast(VIKING_3)==rc.getID()){
 	            	vikingStrategy();
@@ -57,10 +60,8 @@ public class SoldierLogic extends RobotLogic{
 	            tryShoot();
 	            
 	            if(enemyRobots.length > 0) {
-	                MapLocation myLocation = rc.getLocation();
 	                MapLocation enemyLocation = enemyRobots[0].getLocation();
 	                Direction toEnemy = myLocation.directionTo(enemyLocation);
-	
 	                tryMove(toEnemy);
 	            }
 	            else{
@@ -92,10 +93,10 @@ public class SoldierLogic extends RobotLogic{
 		if(rc.readBroadcast(VIKING_1)==rc.getID()) {
 			rc.broadcast(VIKING_1, 0);
 		}
-		if(rc.readBroadcast(VIKING_1)==rc.getID()) {
+		if(rc.readBroadcast(VIKING_2)==rc.getID()) {
 			rc.broadcast(VIKING_2, 0);
 		}
-		if(rc.readBroadcast(VIKING_1)==rc.getID()) {
+		if(rc.readBroadcast(VIKING_3)==rc.getID()) {
 			rc.broadcast(VIKING_3, 0);
 		}
 		if(rc.readBroadcast(ROMAN_EMPIRE_1)==rc.getID()) {

@@ -13,16 +13,16 @@ public abstract class RobotLogic {
 	 RobotInfo[] allyRobots;  //per le strategie
 	 TreeInfo[] trees;
 	 BulletInfo[] bullets;
-	 private float angolo;
-	 public static final int DEATHDIVIDER=4;
-	 public static final int REGENERATIONROUNDS=20;
+	 float angleRunner=0;
+	 public float angolo=0;
+	 public static final int DEATH_DIVIDER=4;
+	 public static final int REGENERATION_ROUNDS=20;
 	 public static final int VIKING_NUM_SOLDIER = 3;
 	 public static final int ENOUGHT_BULLETS_FOR_TRIAD = 50;
-	 public static final float ANGOLO_SOL_1=-1.5f;
-	 public static final float ANGOLO_SOL_2=-1.0f;
-	 public static final float ANGOLO_SOL_3=-0.5f;
-	 int i = 0;
-	 int j=0;
+	 public static final float SOLAR_ANGLE_1=-0.45f;
+	 public static final float SOLAR_ANGLE_2=0.0f;
+	 public static final float SOLAR_ANGLE_3=+0.45f;
+	 boolean farm=false;
 
 	 
 	 //broadcast channels
@@ -30,7 +30,6 @@ public abstract class RobotLogic {
 	 public static final int NUM_SOLDIER=51;
 	 public static final int NUM_GARDENER=52;
 	 public static final int NUM_LUMBERJACK=53;
-	 public static final int NUM_ARCHON=55;
 	 public static final int NUM_TANK=54;
 	 public static final int EXPLORER_X=0;
 	 public static final int EXPLORER_Y=1;
@@ -50,13 +49,12 @@ public abstract class RobotLogic {
 	 public static final int FARMER_X=15;
 	 public static final int FARMER_Y=16;
 	 public static final int FARMING_LUMBERJACK=17;
-	 public static final int FARMING_GARDENER=18;
-	 public static final int FARMING_SCOUT=19;
-	 public static final int SOLAR_1=20;
-	 public static final int SOLAR_2=21;
-	 public static final int SOLAR_3=22;
-	 public static final int FORMICA_X=100;
-	 public static final int FORMICA_Y=100;
+	 public static final int IS_A_GOOD_ROAD=18;
+	 public static final int FARMING_GARDENER=19;
+	 public static final int FARMING_SCOUT=20;
+	 public static final int SOLAR_1=21;
+	 public static final int SOLAR_2=22;
+	 public static final int SOLAR_3=23;
 
 	 
 	 
@@ -70,29 +68,32 @@ public abstract class RobotLogic {
 		 allyRobots = rc.senseNearbyRobots(rc.getType().sensorRadius, ally);//per le strategie
 		 trees = rc.senseNearbyTrees(rc.getType().sensorRadius);
 		 bullets = rc.senseNearbyBullets(rc.getType().bodyRadius+1);
-		 angolo = 0;
 	 }
 	 
 	 public abstract void run() throws GameActionException;
 	 
 	 public void runnerStrategy() throws GameActionException{
+		 
 		 gameInfo();
 		 MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy);
-		 if(rc.getRoundNum()%100<40 && myLocation.distanceTo(enemyArchon[0])>35){
+		 if(enemyRobots.length>0) matrixStrategy();
+		 if(myLocation.distanceTo(enemyArchon[0])>35){
 		     Direction toEnemyArchon = myLocation.directionTo(enemyArchon[0]);
-		     rc.move(toEnemyArchon);
+		     float angle=(toEnemyArchon.radians+solarStrategy())+((float)Math.sin(angleRunner)*1.5f);  
+			 Direction runner_dir= new Direction(angle); 
+			 tryMove(runner_dir);
+			
+			 angleRunner=(float)Math.PI/10+angleRunner;
 		 }
 		 else{
 			 tryMove(randomDirection());
-		 }
-		 
+		 }	 
 		 
 	 }
 	
 	 public void exploreStrategy() throws GameActionException{
 		 
 		 gameInfo();
-		 boolean farm=false;
 		 
 		 if(trees.length>0 && enemyRobots.length==0){
 			 rc.broadcastFloat(EXPLORER_X, myLocation.x);
@@ -104,7 +105,7 @@ public abstract class RobotLogic {
 				 rc.broadcastBoolean(FARM_ZONE, true);
 				 rc.broadcastFloat(FARMER_X, myLocation.x);
 				 rc.broadcastFloat(FARMER_Y, myLocation.y);
-				 Clock.yield();
+				 tryMove(myLocation.directionTo(myLocation));
 			 }
 			 else {
 				 rc.broadcastBoolean(FARM_ZONE, false);
@@ -116,7 +117,7 @@ public abstract class RobotLogic {
 			 
 			 int enemySoldiers=0;
 			 for(int i=0; i<enemyRobots.length; i++){
-					if(enemyRobots[i].getType()==RobotType.SOLDIER || enemyRobots[i].getType()==RobotType.TANK || enemyRobots[i].getType()==RobotType.SCOUT) enemySoldiers++;
+					if(enemyRobots[i].getType()==RobotType.SOLDIER || enemyRobots[i].getType()==RobotType.TANK || enemyRobots[i].getType()==RobotType.SCOUT ||  enemyRobots[i].getType()==RobotType.LUMBERJACK) enemySoldiers++;
 				}
 			
 			 if(enemySoldiers>1){
@@ -130,144 +131,112 @@ public abstract class RobotLogic {
 				 else{
 					 MapLocation[] myArchon = rc.getInitialArchonLocations(ally);
 					 Direction toMyArchon = myLocation.directionTo(myArchon[0]);
-					 rc.move(toMyArchon);
+					 tryMove(toMyArchon);
 				 }
 			 }
 		 }
 		 
-		 angolo+= 0.2;
+		 angolo+= 0.09;
 		 Direction dir = new Direction(angolo);
 		 tryMove(dir); 
+			
 	 }
-	 
-		 public void seguiFormica() throws GameActionException{
-		 gameInfo();
-		 float prossimoPassoX = rc.readBroadcastFloat(FORMICA_X+j);		
-		 j++;
-		 
-		 float prossimoPassoY = rc.readBroadcastFloat(FORMICA_Y+j);
-		 j++;
-		
-		 tryMove(new Direction(prossimoPassoX,prossimoPassoY));
-		  }
-	 	
-	 public void formica() throws GameActionException {
-	    	
-	    gameInfo();
-	   	float allyArchonX = rc.readBroadcastFloat(ARCHON_LOCATION_X);
-		float allyArchonY = rc.readBroadcastFloat(ARCHON_LOCATION_Y);    		
-	   	if(!(isInDanger()) && rc.getRoundNum()%20==0 && i<40) {
-	   		MapLocation myLocation = rc.getLocation();
-	   		rc.broadcastFloat(FORMICA_X+i, myLocation.x);
-	   		rc.broadcastFloat(FORMICA_Y+i+1, myLocation.y);
-    		i=i+2;
-    		MapLocation [] enemyLocationArchon = rc.getInitialArchonLocations(enemy);
-    		Direction enemyLocation = myLocation.directionTo(enemyLocationArchon[0]);
-			tryMove(enemyLocation);
-		}else if(isInDanger()) {
-    		tryShoot();
-    	}else{
-    		MapLocation [] enemyLocationArchon = rc.getInitialArchonLocations(enemy);
-    		Direction enemyLocation = myLocation.directionTo(enemyLocationArchon[0]);
-    		tryMove(enemyLocation);
-    	}
-    
-    }
 	 
 	 public void farmStrategy() throws GameActionException{
 		 
 		 gameInfo();
 		 
-		 
 		 float allyArchonX = rc.readBroadcastFloat(ARCHON_LOCATION_X);
 		 float allyArchonY = rc.readBroadcastFloat(ARCHON_LOCATION_Y);
-		 /*if(rc.getType().equals(RobotType.LUMBERJACK) && id1 == 0){
-			 if(rc.readBroadcastBoolean(FARM_ZONE)){
-				 tryMove(new Direction(FARMER_X,FARMER_Y));
-				 rc.broadcastInt(FARMING_LUMBERJACK, rc.getID());
-				 
-			 }
-		 }
-		 if(rc.getType().equals(RobotType.GARDENER) && id2 == 0){
-			 if(rc.readBroadcastBoolean(FARM_ZONE)){
-				 tryMove(new Direction(FARMER_X,FARMER_Y));
-				 rc.broadcastInt(FARMING_GARDENER, rc.getID());
-			 } 
-			 if(trees.length==0){
-				 tryMove(new Direction(allyArchonX,allyArchonY));
-				 rc.broadcastBoolean(FARM_ZONE, false);
-			 }
-		 }
-		 if(trees.length==0||(!rc.getType().equals(RobotType.SCOUT))){
-			 tryMove(new Direction(allyArchonX,allyArchonY));
-			 rc.broadcastBoolean(FARM_ZONE, false);
-		 }*/
+		 float farmerScoutX= rc.readBroadcastFloat(FARMER_X);
+		 float farmerScoutY= rc.readBroadcastFloat(FARMER_Y);
+		 MapLocation farmZone= new MapLocation(farmerScoutX,farmerScoutY);
+		 Direction toFarmZone= myLocation.directionTo(farmZone);
+		 MapLocation allyArchon= new MapLocation(allyArchonX,allyArchonY);
+		 Direction toAllyArchon= myLocation.directionTo(allyArchon);
 		 
-		 if(rc.readBroadcastBoolean(FARM_ZONE)){
-			 
-			 if(rc.readBroadcast(FARMING_LUMBERJACK)==rc.getID() && rc.readBroadcast(FARMER_X)!=0 && rc.readBroadcast(FARMER_Y)!=0){
-				 if(rc.getLocation().distanceTo(new MapLocation(FARMER_X,FARMER_Y))>2){
-					 tryMove(new Direction(FARMER_X,FARMER_Y));
-				 }
+		 if(rc.readBroadcast(FARMING_LUMBERJACK)==rc.getID() && farmerScoutX!=0 && farmerScoutY!=0){
+			 if(rc.getLocation().distanceTo(farmZone)>5){
+				 tryMove(toFarmZone);
 			 }
-			 
-			 if(rc.readBroadcast(FARMING_GARDENER)==rc.getID() && rc.readBroadcast(FARMER_X)!=0 && rc.readBroadcast(FARMER_Y)!=0){
-				 if(rc.getLocation().distanceTo(new MapLocation(FARMER_X,FARMER_Y))>2){
-					 tryMove(new Direction(FARMER_X,FARMER_Y));
-				 }
+			 if(rc.getLocation().distanceTo(farmZone)<5 && rc.getHealth()>RobotType.LUMBERJACK.maxHealth*4/5){
+				 rc.broadcastBoolean(IS_A_GOOD_ROAD, true);
 			 }
 		 }
 		 
-		 if(trees.length==0) tryMove(new Direction(allyArchonX,allyArchonY));
+		 if(rc.readBroadcast(FARMING_GARDENER)==rc.getID() && farmerScoutX!=0 && farmerScoutY!=0){
+			 if(rc.getLocation().distanceTo(farmZone)>2 && rc.readBroadcastBoolean(IS_A_GOOD_ROAD)){
+				 tryMove(toFarmZone);
+			 }
+		 }
+		 
+		 if(trees.length==0) tryMove(toAllyArchon);
 	 }
 	 
-     public void solarStrategy() throws GameActionException{
+     public float solarStrategy() throws GameActionException{
 		 
-		 if (rc.readBroadcast(SOLAR_1)==0 || rc.readBroadcast(SOLAR_1)==rc.getID())
+    	 if (rc.readBroadcast(SOLAR_1)==0 || rc.readBroadcast(SOLAR_1)==rc.getID())
 		 {
-			 Direction dir= new Direction(ANGOLO_SOL_1);
-			 tryMove(dir);
 			 rc.broadcast(SOLAR_1, rc.getID());
+			 return SOLAR_ANGLE_1;
 		 }
 		 else if (rc.readBroadcast(SOLAR_2)==0 && rc.readBroadcast(SOLAR_1)!=rc.getID() || rc.readBroadcast(SOLAR_2)==rc.getID())
-		 {
-			 Direction dir= new Direction(ANGOLO_SOL_2);
-			 tryMove(dir);
+		 {			 	 
 			 rc.broadcast(SOLAR_2, rc.getID());
+			 return SOLAR_ANGLE_2;
 		 }
 		 else if (rc.readBroadcast(SOLAR_3)==0 && rc.readBroadcast(SOLAR_1)!=rc.getID() && rc.readBroadcast(SOLAR_2)!=rc.getID() || rc.readBroadcast(SOLAR_3)==rc.getID())
 		 {
-			 Direction dir= new Direction(ANGOLO_SOL_3);
-			 tryMove(dir);
 			 rc.broadcast(SOLAR_3, rc.getID());
-		 }		 
+			 return SOLAR_ANGLE_3;
+		 }	
+		 return 0.0f;	 
 		
 	 }
 
 	 
 	 public void vikingStrategy() throws GameActionException{
-		
-		gameInfo();
-		
-		MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy); 
-		float allyArchonX = rc.readBroadcastFloat(ARCHON_LOCATION_X);
-		float allyArchonY = rc.readBroadcastFloat(ARCHON_LOCATION_Y);
-		MapLocation allyArchon = new MapLocation(allyArchonX,allyArchonY);
-		int nearEnemy = enemyRobots.length;	
-		boolean nearEnemyArchon = myLocation.isWithinDistance(enemyArchon[0], RobotType.ARCHON.sensorRadius); 
-		boolean nearAllyArchon = myLocation.isWithinDistance(allyArchon, RobotType.ARCHON.sensorRadius);
-		
-		if(rc.readBroadcast(VIKING_1)!=0 && rc.readBroadcast(VIKING_2)!=0 && rc.readBroadcast(VIKING_3)!=0 && rc.getRoundNum()%1000<500  && nearEnemy == 0){
-			Direction toEnemyArchon = myLocation.directionTo(enemyArchon[0]);
-			tryMove(toEnemyArchon);
+	
+		/*if(rc.readBroadcast(VIKING_1)!=0 && rc.readBroadcast(VIKING_2)!=0 && rc.readBroadcast(VIKING_3)!=0 && rc.getRoundNum()%1000<500){
+			
+			if(enemyRobots.length > 0){
+				tryShoot();
+				tryMove(randomDirection());
+			}
+			else{
+				if(rc.getLocation().distanceTo(enemyArchon[0])>10) tryMove(toEnemyArchon);
+				else tryMove(randomDirection());
+		    }
 		}
-		else if((rc.readBroadcast(VIKING_1)==0 || rc.readBroadcast(VIKING_2)==0 || rc.readBroadcast(VIKING_3)==0) && !nearAllyArchon){
-			Direction toAllyArchon = myLocation.directionTo(allyArchon);
+		else{
+			
 			tryMove(toAllyArchon);
-		}
-		else if(nearEnemyArchon || nearEnemy != 0 || nearAllyArchon){
-			runnerStrategy();
-		}
+		}*/
+		
+		 gameInfo();
+		
+		 MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy); 
+		 float allyArchonX = rc.readBroadcastFloat(ARCHON_LOCATION_X);
+		 float allyArchonY = rc.readBroadcastFloat(ARCHON_LOCATION_Y);
+		 MapLocation allyArchon = new MapLocation(allyArchonX,allyArchonY);
+		 int nearEnemies = enemyRobots.length;	
+		 boolean nearEnemyArchon = myLocation.isWithinDistance(enemyArchon[0], RobotType.ARCHON.sensorRadius); 
+		 boolean nearAllyArchon = myLocation.isWithinDistance(allyArchon, RobotType.ARCHON.sensorRadius);
+		
+		 if(rc.readBroadcast(VIKING_1)!=0 && rc.readBroadcast(VIKING_2)!=0 && rc.readBroadcast(VIKING_3)!=0 && rc.getRoundNum()%1000<500  && nearEnemies == 0){
+			 Direction toEnemyArchon = myLocation.directionTo(enemyArchon[0]);
+			 tryMove(toEnemyArchon);
+		 }
+		 else if((rc.readBroadcast(VIKING_1)==0 || rc.readBroadcast(VIKING_2)==0 || rc.readBroadcast(VIKING_3)==0) && !nearAllyArchon && nearEnemies==0){
+			 Direction toAllyArchon = myLocation.directionTo(allyArchon);
+			 tryMove(toAllyArchon);
+		 }
+		 else if(nearEnemyArchon || nearEnemies != 0 || nearAllyArchon){
+			 tryShoot();
+			 MapLocation enemyLocation = enemyRobots[0].getLocation();
+             Direction toEnemy = myLocation.directionTo(enemyLocation);
+             tryMove(toEnemy);
+		 }
 	 }
 	 
 	 public void totalHelpStrategy() throws GameActionException{
@@ -282,9 +251,7 @@ public abstract class RobotLogic {
 				 tryMove(toMyArchon);
 				 
 				 if (enemyRobots.length>1 && rc.getTeamBullets()>=ENOUGHT_BULLETS_FOR_TRIAD) {
-			            // And we have enough bullets, and haven't attacked yet this turn...
 			            if (rc.canFireTriadShot()) {
-			                // ...Then fire a bullet in the direction of the enemy.
 			                rc.fireTriadShot(rc.getLocation().directionTo(enemyRobots[0].location));
 			            }
 			     } 
@@ -330,7 +297,7 @@ public abstract class RobotLogic {
 			MapLocation allyArchon = new MapLocation(allyArchonX,allyArchonY);
 			boolean nearAllyArchon = myLocation.isWithinDistance(allyArchon, RobotType.ARCHON.sensorRadius);
 			int id = rc.getID();
-			if(id == rc.readBroadcastInt(8) || id == rc.readBroadcastInt(9) || id == rc.readBroadcastInt(10)){
+			if(id == rc.readBroadcastInt(ROMAN_EMPIRE_1) || id == rc.readBroadcastInt(ROMAN_EMPIRE_2) || id == rc.readBroadcastInt(ROMAN_EMPIRE_3)){
 				if(!nearAllyArchon){
 					Direction toAllyArchon = myLocation.directionTo(allyArchon);
 					tryMove(toAllyArchon);
@@ -343,14 +310,17 @@ public abstract class RobotLogic {
 			}
 		 }
 	 
-	 public void MatrixStrategy(MapLocation enemy, BulletInfo[] bullets) throws GameActionException {
-	   	 MapLocation currLocation = rc.getLocation();
-	   	 Direction toEnemy = currLocation.directionTo(enemy);
+	 public void matrixStrategy() throws GameActionException {
+	   	 gameInfo();
+		 MapLocation currLocation = rc.getLocation();
+		 MapLocation enemyLocation = enemyRobots[0].location;
+	   	 Direction toEnemy = currLocation.directionTo(enemyLocation);
+	   	 Direction farFromEnemy= new Direction( toEnemy.radians+(float)Math.PI);
 	
 	   	 float minDamage = rc.getHealth();
 	   	 int bestAngle = -40;
 	   	 for (int angle = -40; angle < 40; angle += 10) {
-		   	 MapLocation expectedLocation = currLocation.add(toEnemy.rotateLeftDegrees(angle), rc.getType().strideRadius);
+		   	 MapLocation expectedLocation = currLocation.add((farFromEnemy).rotateLeftDegrees(angle), rc.getType().strideRadius);
 		   	 float damage = expectedDamage(bullets, expectedLocation);
 		
 		   	 if (damage < minDamage) {
@@ -359,7 +329,7 @@ public abstract class RobotLogic {
 			   	 }
 		   	 }
 		
-		   	 tryMove(toEnemy.rotateLeftDegrees(bestAngle));
+		   	 tryMove(farFromEnemy.rotateLeftDegrees(bestAngle));
    	 }
 	 
 	 public float expectedDamage(BulletInfo[] bullets, MapLocation loc) {
@@ -372,71 +342,24 @@ public abstract class RobotLogic {
 	   	 return totalDamage;
    	 }
 	
-	public void shoot() throws GameActionException{
-		 RobotInfo[] robots = rc.senseNearbyRobots(rc.getType().sensorRadius, enemy);
-		 // If there is one...
-         if(rc.getType().equals(RobotType.SCOUT)){
-        	 if (robots.length==1) {
-	             // And we have enough bullets, and haven't attacked yet this turn...
-	             if (rc.canFireSingleShot()) {
-	                 // ...Then fire a bullet in the direction of the enemy.
-	                 rc.fireSingleShot(rc.getLocation().directionTo(robots[0].location));
-	             }
-	         }
-         }
-         else if(rc.getType().equals(RobotType.SOLDIER)){
-        	// If there are some....
-        	 if (robots.length==1) {
-	             // And we have enough bullets, and haven't attacked yet this turn...
-	             if (rc.canFireSingleShot()) {
-	                 // ...Then fire a bullet in the direction of the enemy.
-	                 rc.fireSingleShot(rc.getLocation().directionTo(robots[0].location));
-	             }
-	         }
-        	 else{
-	                // And we have enough bullets, and haven't attacked yet this turn...
-	                if (rc.canFireTriadShot()) {
-	                    // ...Then fire a bullet in the direction of the enemy.
-	                    rc.fireTriadShot(rc.getLocation().directionTo(robots[0].location));
-	                }
-	           } 
-         }
-         else if(rc.getType().equals(RobotType.TANK)){
-        	// If there is one...
-	            if (robots.length==1) {
-	                // And we have enough bullets, and haven't attacked yet this turn...
-	                if (rc.canFireSingleShot()) {
-	                    // ...Then fire a bullet in the direction of the enemy.
-	                    rc.fireSingleShot(rc.getLocation().directionTo(robots[0].location));
-	                }
-	            }
-	            else if (robots.length>1 && robots.length<=3) {
-	                // And we have enough bullets, and haven't attacked yet this turn...
-	                if (rc.canFireTriadShot()) {
-	                    // ...Then fire a bullet in the direction of the enemy.
-	                    rc.fireTriadShot(rc.getLocation().directionTo(robots[0].location));
-	                }
-	            }else{
-	                // And we have enough bullets, and haven't attacked yet this turn...
-	                if (rc.canFirePentadShot()) {
-	                    // ...Then fire a bullet in the direction of the enemy.
-	                    rc.firePentadShot(rc.getLocation().directionTo(robots[0].location));
-	                }
-	            }
-         }
-	 }
-	
 	 
 	 /**
-	  * Ã¨ in pericolo se ci sono nemici nelle vicinanze 
-	  * @return true se Ã¨ in pericolo
+	  * è in pericolo se ci sono nemici nelle vicinanze 
+	  * @return true se è in pericolo
 	  */
 	 boolean isInDanger(){
 		 
 		 gameInfo();
 		 
 		 if(enemyRobots.length>0){
-			 return true;
+			 int enemySoldiers=0;
+			 for(int i=0; i<enemyRobots.length; i++){
+					if(enemyRobots[i].getType()==RobotType.SOLDIER || enemyRobots[i].getType()==RobotType.TANK || enemyRobots[i].getType()==RobotType.SCOUT || enemyRobots[i].getType()==RobotType.LUMBERJACK) enemySoldiers++;
+				}
+			 if(enemySoldiers>0){
+				 return true;
+			 }
+			 else return false;
 		 }
 		 else{
 			 return false;
@@ -456,32 +379,87 @@ public abstract class RobotLogic {
     }
 
     public boolean isDead(int birthRound){
-    	if(rc.getHealth()<rc.getType().maxHealth/DEATHDIVIDER && rc.getRoundNum()-birthRound< REGENERATIONROUNDS) return true;
+    	if(rc.getHealth()<rc.getType().maxHealth/DEATH_DIVIDER && rc.getRoundNum()-birthRound> REGENERATION_ROUNDS) return true;
     	return false;
     }
     
     public void tryShoot() throws GameActionException{
     	
-    	gameInfo();
-  
-    	if (enemyRobots.length==1) {
-            // And we have enough bullets, and haven't attacked yet this turn...
-            if (rc.canFireSingleShot()) {
-                // ...Then fire a bullet in the direction of the enemy.
-                rc.fireSingleShot(rc.getLocation().directionTo(enemyRobots[0].location));
-            }
+		gameInfo();
+		 // If there is one...
+        if(rc.getType().equals(RobotType.SCOUT)){
+        	
+	       	 if (enemyRobots.length==1) {
+		             // And we have enough bullets, and haven't attacked yet this turn...
+		             if (rc.canFireSingleShot()) {
+		                 // ...Then fire a bullet in the direction of the enemy.
+		                 rc.fireSingleShot(rc.getLocation().directionTo(enemyRobots[0].location));
+		             }
+		             else matrixStrategy();
+	         }
         }
-        
-        // If there are some....
-       if (enemyRobots.length>1 && rc.getTeamBullets()>=ENOUGHT_BULLETS_FOR_TRIAD) {
-            // And we have enough bullets, and haven't attacked yet this turn...
-            if (rc.canFireTriadShot()) {
-                // ...Then fire a bullet in the direction of the enemy.
-                rc.fireTriadShot(rc.getLocation().directionTo(enemyRobots[0].location));
-            }
-        } 
-        
-    }
+        else if(rc.getType().equals(RobotType.SOLDIER)){
+        	
+       	// If there are some....
+	       	 if (enemyRobots.length==1) {
+		             // And we have enough bullets, and haven't attacked yet this turn...
+		             if (rc.canFireSingleShot()) {
+		                 // ...Then fire a bullet in the direction of the enemy.
+		                 rc.fireSingleShot(rc.getLocation().directionTo(enemyRobots[0].location));
+		             }
+		             else matrixStrategy();
+		     }
+	       	 else if(enemyRobots.length>1){
+	                // And we have enough bullets, and haven't attacked yet this turn...
+	                 if (rc.canFireTriadShot() && rc.getTeamBullets()>ENOUGHT_BULLETS_FOR_TRIAD) {
+	                    // ...Then fire a bullet in the direction of the enemy.
+	                      rc.fireTriadShot(rc.getLocation().directionTo(enemyRobots[0].location));
+	                 }
+	                 else if (rc.canFireSingleShot()) {
+		                 // ...Then fire a bullet in the direction of the enemy.
+		                 rc.fireSingleShot(rc.getLocation().directionTo(enemyRobots[0].location));
+		             }
+		             else matrixStrategy();
+	           } 
+        }
+        else if(rc.getType().equals(RobotType.TANK)){
+       	// If there is one...
+	            if (enemyRobots.length==1) {
+	                // And we have enough bullets, and haven't attacked yet this turn...
+	                if (rc.canFireSingleShot()) {
+	                    // ...Then fire a bullet in the direction of the enemy.
+	                    rc.fireSingleShot(rc.getLocation().directionTo(enemyRobots[0].location));
+	                }
+	                else matrixStrategy();
+	            }
+	            else if (enemyRobots.length>1 && enemyRobots.length<=3 && rc.getTeamBullets()>ENOUGHT_BULLETS_FOR_TRIAD) {
+	                // And we have enough bullets, and haven't attacked yet this turn...
+	                if (rc.canFireTriadShot()) {
+	                    // ...Then fire a bullet in the direction of the enemy.
+	                    rc.fireTriadShot(rc.getLocation().directionTo(enemyRobots[0].location));
+	                }
+	                else if (rc.canFireSingleShot()) {
+		                 // ...Then fire a bullet in the direction of the enemy.
+		                 rc.fireSingleShot(rc.getLocation().directionTo(enemyRobots[0].location));
+		             }
+		             
+	            }else if(enemyRobots.length>3){
+	                // And we have enough bullets, and haven't attacked yet this turn...
+	                if (rc.canFirePentadShot()) {
+	                    // ...Then fire a bullet in the direction of the enemy.
+	                    rc.firePentadShot(rc.getLocation().directionTo(enemyRobots[0].location));
+	                }
+	                else if (rc.canFireTriadShot()) {
+	                    // ...Then fire a bullet in the direction of the enemy.
+	                    rc.fireTriadShot(rc.getLocation().directionTo(enemyRobots[0].location));
+	                }
+	                else if (rc.canFireSingleShot()) {
+		                 // ...Then fire a bullet in the direction of the enemy.
+		                 rc.fireSingleShot(rc.getLocation().directionTo(enemyRobots[0].location));
+		             }
+	            }
+        }
+	 }
     
     /**
      * Attempts to move in a given direction, while avoiding small obstacles directly in the path.
@@ -572,7 +550,7 @@ public abstract class RobotLogic {
 		enemyRobots = rc.senseNearbyRobots(rc.getType().sensorRadius, enemy);
 		allyRobots = rc.senseNearbyRobots(rc.getType().sensorRadius, ally);//per le strategie
 		trees = rc.senseNearbyTrees(rc.getType().sensorRadius);
-		bullets = rc.senseNearbyBullets(rc.getType().bodyRadius+1);
+		bullets = rc.senseNearbyBullets(rc.getType().sensorRadius);
     }
    
     public int getNumScout() throws GameActionException{
@@ -615,12 +593,4 @@ public abstract class RobotLogic {
     	rc.broadcast(NUM_TANK, rc.readBroadcast(NUM_TANK) + n );
     }
     
-    public int getNumArchon() throws GameActionException{
-    	return rc.readBroadcast(NUM_ARCHON);
-    }
-    
-    public void setNumArchon(int n) throws GameActionException{
-    	rc.broadcast(NUM_ARCHON, rc.readBroadcast(NUM_ARCHON) + n );
-    }
-
-}
+   }
