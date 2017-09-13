@@ -353,10 +353,64 @@ public abstract class RobotLogic {
 	   	 return totalDamage;
    	 }
 	
+	public void shoot() throws GameActionException{
+		 RobotInfo[] robots = rc.senseNearbyRobots(rc.getType().sensorRadius, enemy);
+		 // If there is one...
+         if(rc.getType().equals(RobotType.SCOUT)){
+        	 if (robots.length==1) {
+	             // And we have enough bullets, and haven't attacked yet this turn...
+	             if (rc.canFireSingleShot()) {
+	                 // ...Then fire a bullet in the direction of the enemy.
+	                 rc.fireSingleShot(rc.getLocation().directionTo(robots[0].location));
+	             }
+	         }
+         }
+         else if(rc.getType().equals(RobotType.SOLDIER)){
+        	// If there are some....
+        	 if (robots.length==1) {
+	             // And we have enough bullets, and haven't attacked yet this turn...
+	             if (rc.canFireSingleShot()) {
+	                 // ...Then fire a bullet in the direction of the enemy.
+	                 rc.fireSingleShot(rc.getLocation().directionTo(robots[0].location));
+	             }
+	         }
+        	 else{
+	                // And we have enough bullets, and haven't attacked yet this turn...
+	                if (rc.canFireTriadShot()) {
+	                    // ...Then fire a bullet in the direction of the enemy.
+	                    rc.fireTriadShot(rc.getLocation().directionTo(robots[0].location));
+	                }
+	           } 
+         }
+         else if(rc.getType().equals(RobotType.TANK)){
+        	// If there is one...
+	            if (robots.length==1) {
+	                // And we have enough bullets, and haven't attacked yet this turn...
+	                if (rc.canFireSingleShot()) {
+	                    // ...Then fire a bullet in the direction of the enemy.
+	                    rc.fireSingleShot(rc.getLocation().directionTo(robots[0].location));
+	                }
+	            }
+	            else if (robots.length>1 && robots.length<=3) {
+	                // And we have enough bullets, and haven't attacked yet this turn...
+	                if (rc.canFireTriadShot()) {
+	                    // ...Then fire a bullet in the direction of the enemy.
+	                    rc.fireTriadShot(rc.getLocation().directionTo(robots[0].location));
+	                }
+	            }else{
+	                // And we have enough bullets, and haven't attacked yet this turn...
+	                if (rc.canFirePentadShot()) {
+	                    // ...Then fire a bullet in the direction of the enemy.
+	                    rc.firePentadShot(rc.getLocation().directionTo(robots[0].location));
+	                }
+	            }
+         }
+	 }
+	
 	 
 	 /**
-	  * è in pericolo se ci sono nemici nelle vicinanze 
-	  * @return true se è in pericolo
+	  * Ã¨ in pericolo se ci sono nemici nelle vicinanze 
+	  * @return true se Ã¨ in pericolo
 	  */
 	 boolean isInDanger(){
 		 
