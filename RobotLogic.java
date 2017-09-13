@@ -21,6 +21,8 @@ public abstract class RobotLogic {
 	 public static final float ANGOLO_SOL_1=-1.5f;
 	 public static final float ANGOLO_SOL_2=-1.0f;
 	 public static final float ANGOLO_SOL_3=-0.5f;
+	 int i = 0;
+	 int j=0;
 
 	 
 	 //broadcast channels
@@ -53,6 +55,8 @@ public abstract class RobotLogic {
 	 public static final int SOLAR_1=20;
 	 public static final int SOLAR_2=21;
 	 public static final int SOLAR_3=22;
+	 public static final int FORMICA_X=100;
+	 public static final int FORMICA_Y=100;
 
 	 
 	 
@@ -134,8 +138,41 @@ public abstract class RobotLogic {
 		 angolo+= 0.2;
 		 Direction dir = new Direction(angolo);
 		 tryMove(dir); 
-			
 	 }
+	 
+		 public void seguiFormica() throws GameActionException{
+		 gameInfo();
+		 float prossimoPassoX = rc.readBroadcastFloat(FORMICA_X+j);		
+		 j++;
+		 
+		 float prossimoPassoY = rc.readBroadcastFloat(FORMICA_Y+j);
+		 j++;
+		
+		 tryMove(new Direction(prossimoPassoX,prossimoPassoY));
+		  }
+	 	
+	 public void formica() throws GameActionException {
+	    	
+	    gameInfo();
+	   	float allyArchonX = rc.readBroadcastFloat(ARCHON_LOCATION_X);
+		float allyArchonY = rc.readBroadcastFloat(ARCHON_LOCATION_Y);    		
+	   	if(!(isInDanger()) && rc.getRoundNum()%20==0 && i<40) {
+	   		MapLocation myLocation = rc.getLocation();
+	   		rc.broadcastFloat(FORMICA_X+i, myLocation.x);
+	   		rc.broadcastFloat(FORMICA_Y+i+1, myLocation.y);
+    		i=i+2;
+    		MapLocation [] enemyLocationArchon = rc.getInitialArchonLocations(enemy);
+    		Direction enemyLocation = myLocation.directionTo(enemyLocationArchon[0]);
+			tryMove(enemyLocation);
+		}else if(isInDanger()) {
+    		tryShoot();
+    	}else{
+    		MapLocation [] enemyLocationArchon = rc.getInitialArchonLocations(enemy);
+    		Direction enemyLocation = myLocation.directionTo(enemyLocationArchon[0]);
+    		tryMove(enemyLocation);
+    	}
+    
+    }
 	 
 	 public void farmStrategy() throws GameActionException{
 		 
