@@ -22,7 +22,9 @@ public class ScoutLogic extends RobotLogic{
 	        try {
 	        	
 	        	boolean timeToRun=rc.getRoundNum()-birthRound < 70 || (rc.getRoundNum()-birthRound > 300 && rc.getRoundNum()-birthRound <= 350);
+	        	
 	        	gameInfo();
+	        	trySenseEnemyArchon();
 	
 	        	if(timeToRun){
 	        		runnerStrategy();

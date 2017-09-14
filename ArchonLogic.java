@@ -41,6 +41,11 @@ public class ArchonLogic extends RobotLogic{
         rc.broadcast(SQUAD_2, 0);
         rc.broadcast(SQUAD_3, 0);
         rc.broadcastBoolean(FORMICA, false);
+        
+        MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy);
+        rc.broadcastFloat(ENEMY_ARCHON_X, enemyArchon[0].x);
+        rc.broadcastFloat(ENEMY_ARCHON_Y, enemyArchon[0].y);
+        rc.broadcastBoolean(ENEMY_ARCHON_KILLED, false);
 
         
         while (true) {
@@ -58,13 +63,23 @@ public class ArchonLogic extends RobotLogic{
                 }
                
                 if (shouldBuildGardener()) {
-                    rc.hireGardener(randomDirection());
+                	Direction toInitialEnemyArchon = myLocation.directionTo(enemyArchon[0]);
+                    rc.hireGardener(toInitialEnemyArchon);
                     setNumGardener(+1);
                 }
                 
-                angolo+=0.5;
-                Direction dir = new Direction(angolo);
-       		    if(!moved) tryMove(dir); 
+                MapLocation[] allyArchon = rc.getInitialArchonLocations(ally);
+                if (myLocation.distanceTo(allyArchon[0])<6){
+                	angolo+=0.5;
+                	Direction dir = new Direction(angolo);
+           		    if(!moved) tryMove(dir);
+                } 
+                else{
+                	Direction toMyArchon = myLocation.directionTo(allyArchon[0]);
+                	if(!moved) tryMove(toMyArchon);
+                
+                }
+
 
                 Clock.yield();
 

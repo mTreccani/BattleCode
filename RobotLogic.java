@@ -13,12 +13,14 @@ public abstract class RobotLogic {
 	 RobotInfo[] allyRobots;  //per le strategie
 	 TreeInfo[] trees;
 	 BulletInfo[] bullets;
+	 Direction toEnemyArchon;
 	 boolean moved;
 	 boolean attacked;
 	 boolean farm=false;
 	 
 	 private int i=0;
 	 private int j=0;
+	 private int archonNotHere=0;
 	 
 	 float angleRunner=0;
 	 public float angolo=0;
@@ -33,6 +35,7 @@ public abstract class RobotLogic {
 
 	 
 	 //broadcast channels
+	 
 	 public static final int NUM_SCOUT=50;
 	 public static final int NUM_SOLDIER=51;
 	 public static final int NUM_GARDENER=52;
@@ -76,6 +79,10 @@ public abstract class RobotLogic {
 	 public static final int SQUAD_1=27;
 	 public static final int SQUAD_2=28;
 	 public static final int SQUAD_3=29;
+	 
+	 public static final int ENEMY_ARCHON_X=30;
+	 public static final int ENEMY_ARCHON_Y=31;
+	 public static final int ENEMY_ARCHON_KILLED=32;
 	 
 	 public static final int FORMICA=99;  
 	 public static final int FORMICA_X=100;
@@ -264,12 +271,12 @@ public abstract class RobotLogic {
 	
 		 gameInfo();
 		
-		 MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy); 
 		 float allyArchonX = rc.readBroadcastFloat(ARCHON_LOCATION_X);
 		 float allyArchonY = rc.readBroadcastFloat(ARCHON_LOCATION_Y);
 		 MapLocation allyArchon = new MapLocation(allyArchonX,allyArchonY);
 		 int nearEnemies = enemyRobots.length;	
-		 boolean nearEnemyArchon = myLocation.isWithinDistance(enemyArchon[0], RobotType.ARCHON.sensorRadius); 
+		 MapLocation enemyArchon= new MapLocation(rc.readBroadcastFloat(ENEMY_ARCHON_X),rc.readBroadcastFloat(ENEMY_ARCHON_Y));
+		 boolean nearEnemyArchon = myLocation.isWithinDistance(enemyArchon, RobotType.ARCHON.sensorRadius); 
 		 boolean nearAllyArchon = myLocation.isWithinDistance(allyArchon, RobotType.ARCHON.sensorRadius);
 		
 		 boolean viking = rc.readBroadcast(VIKING_1) == rc.getID() || rc.readBroadcast(VIKING_2)== rc.getID() || rc.readBroadcast(VIKING_3) == rc.getID();
@@ -287,7 +294,6 @@ public abstract class RobotLogic {
 		 
 		
 		 if(!roman && viking && rc.readBroadcast(VIKING_1)!=0 && rc.readBroadcast(VIKING_2)!=0 && rc.readBroadcast(VIKING_3)!=0  && nearEnemies == 0){
-			 Direction toEnemyArchon = myLocation.directionTo(enemyArchon[0]);
 			 if(!moved) tryMove(toEnemyArchon);
 		 }
 		 else if((rc.readBroadcast(VIKING_1)==0 || rc.readBroadcast(VIKING_2)==0 || rc.readBroadcast(VIKING_3)==0) && !nearAllyArchon && nearEnemies==0 && !roman){
@@ -295,7 +301,18 @@ public abstract class RobotLogic {
 			 if(!moved) tryMove(toAllyArchon);
 		 }
 		 else if((nearEnemyArchon || nearEnemies != 0 || nearAllyArchon || !viking )&& !roman){
-			 exploreStrategy();
+			 if(nearEnemies!=0){
+				 if(!attacked) tryShoot();
+				 MapLocation enemyLocation = enemyRobots[0].getLocation();
+	             Direction toEnemy = myLocation.directionTo(enemyLocation);
+             	 if(!moved) tryMove(toEnemy);
+			 }
+			 else if((getNumSoldier()>8 || rc.getRoundNum()>2500) && !nearEnemyArchon){
+             	 if(!moved) tryMove(toEnemyArchon);
+			 }
+			 else{
+				 if(!moved) tryMove(randomDirection());
+			 }
 		 }
 		 else if(roman){
 			 romanEmpireStrategy();
@@ -405,7 +422,6 @@ public abstract class RobotLogic {
 			 rc.broadcast(SQUAD_0, rc.getID());
 			 rc.broadcastFloat(TANK_1, myLocation.x);
 			 rc.broadcastFloat(TANK_2, myLocation.y);
-			 
 		 }
 		 
 		 else if(rc.readBroadcast(SQUAD_0)!=0){
@@ -434,7 +450,7 @@ public abstract class RobotLogic {
 					 if(!moved) tryMove(randomDirection());
 				 }
 			 }
-	 		 else if (rc.getType()==RobotType.SCOUT && (rc.readBroadcast(SQUAD_3)==0 && rc.readBroadcast(SQUAD_1)!=rc.getID() && rc.readBroadcast(SQUAD_2)!=rc.getID() || rc.readBroadcast(SQUAD_3)==rc.getID())){
+	 		 else if (rc.getType()==RobotType.SOLDIER && (rc.readBroadcast(SQUAD_3)==0 && rc.readBroadcast(SQUAD_1)!=rc.getID() && rc.readBroadcast(SQUAD_2)!=rc.getID() || rc.readBroadcast(SQUAD_3)==rc.getID())){
 	 			rc.broadcast(SQUAD_3, rc.getID());
 	 			 if(!nearMyTank){
 	 				 if(!moved) tryMove(toMyTank);
@@ -445,13 +461,36 @@ public abstract class RobotLogic {
 			 } 
 		 }
 	 }
+	 
+	 public void trySenseEnemyArchon() throws GameActionException{
+		 
+		 gameInfo();
+		 
+		 if(enemyRobots.length>0){
+			 for(int i=0; i<enemyRobots.length; i++){
+				 if(enemyRobots[i].getType()==RobotType.ARCHON){
+					 rc.broadcastFloat(ENEMY_ARCHON_X, enemyRobots[i].location.x);
+					 rc.broadcastFloat(ENEMY_ARCHON_Y, enemyRobots[i].location.y);
+				 }
+			 }
+		 }
+	 }
+	 
+	 public Direction directionToEnemyArchon() throws GameActionException{
+		 
+		 float enemyArchonX= rc.readBroadcastFloat(ENEMY_ARCHON_X);
+		 float enemyArchonY= rc.readBroadcastFloat(ENEMY_ARCHON_Y); 
+		 MapLocation enemyArchon= new MapLocation(enemyArchonX,enemyArchonY);
+		 Direction toEnemyArchon= rc.getLocation().directionTo(enemyArchon);
+		 return toEnemyArchon;
+	 }
 
 	
 	 /**
 	  * è in pericolo se ci sono nemici nelle vicinanze 
 	  * @return true se è in pericolo
 	  */
-	 boolean isInDanger(){
+	 boolean isInDanger() throws GameActionException{
 		 
 		 gameInfo();
 		 
@@ -489,6 +528,47 @@ public abstract class RobotLogic {
     	else{
     		return false;
     	}
+    }
+    
+    public void enemyArchonKilled() throws GameActionException{
+    	
+    	gameInfo();
+    	
+    	/*float enemyArchonX= rc.readBroadcastFloat(ENEMY_ARCHON_X);
+		float enemyArchonY= rc.readBroadcastFloat(ENEMY_ARCHON_Y); 
+		MapLocation enemyArchon= new MapLocation(enemyArchonX,enemyArchonY);
+    	RobotInfo[] enemies=rc.senseNearbyRobots(enemyArchon, 3000, enemy);
+    	for(int i=0; i<enemies.length; i++){
+			 if(enemyRobots[i].getType()==RobotType.ARCHON){
+				 return false;
+			 }
+		} 
+    	return true;
+    	*/
+    	float enemyArchonX= rc.readBroadcastFloat(ENEMY_ARCHON_X);
+		float enemyArchonY= rc.readBroadcastFloat(ENEMY_ARCHON_Y); 
+		MapLocation enemyArchon= new MapLocation(enemyArchonX,enemyArchonY);
+		boolean nearEnemyArchon = myLocation.isWithinDistance(enemyArchon, RobotType.ARCHON.sensorRadius); 
+		if(nearEnemyArchon){
+	    	for(int i=0; i<enemyRobots.length; i++){
+				 if(enemyRobots[i].getType()==RobotType.ARCHON){
+					 archonNotHere=0;
+					 rc.broadcastBoolean(ENEMY_ARCHON_KILLED, false);
+				 }
+			} 
+	    	
+	    	archonNotHere++;
+	    	if(archonNotHere>30)  rc.broadcastBoolean(ENEMY_ARCHON_KILLED, true);
+		}
+    }
+    
+    public void killThemAll() throws GameActionException{
+    	gameInfo();
+    	RobotInfo[] targets=rc.senseNearbyRobots(myLocation, 50, enemy);
+    	MapLocation targetLoc= new MapLocation(targets[0].location.x,targets[0].location.y);
+    	Direction toTarget= myLocation.directionTo(targetLoc);
+    	if(!moved) tryMove(toTarget);
+    	if(!attacked) tryShoot();
     }
     
     public void tryShoot() throws GameActionException{
@@ -635,14 +715,15 @@ public abstract class RobotLogic {
         return (perpendicularDist <= rc.getType().bodyRadius);
     }
     
-    public void gameInfo(){
+    public void gameInfo() throws GameActionException{
 		myLocation = rc.getLocation();
 		enemyRobots = rc.senseNearbyRobots(rc.getType().sensorRadius, enemy);
-		allyRobots = rc.senseNearbyRobots(rc.getType().sensorRadius, ally);//per le strategie
+		allyRobots = rc.senseNearbyRobots(rc.getType().sensorRadius, ally);
 		trees = rc.senseNearbyTrees(rc.getType().sensorRadius);
 		bullets = rc.senseNearbyBullets(rc.getType().sensorRadius);
 		moved= rc.hasMoved();
 		attacked= rc.hasAttacked();
+		toEnemyArchon=directionToEnemyArchon();
     }
    
     public int getNumScout() throws GameActionException{

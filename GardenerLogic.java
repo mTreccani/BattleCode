@@ -5,20 +5,16 @@ public class GardenerLogic extends RobotLogic{
 	
 	private static final int NO_SCOUT_NEEDED=1500;
 	private static final int NO_TREES=0;
-	private static final int TREE_BULLET=100;
-	private static final int MAX_TREES=1;
+	private static final int MAX_TREES=3;
 	private static final int MAX_SCOUTS=3;
 	private static final int MAX_SOLDIERS=10;
-	private static final int MAX_LUMBERJACKS=3;
+	private static final int MAX_LUMBERJACKS=2;
 	private static final int MIN_LUMBERJACKS=0;
 	private static final int TREES_LUMBERJACK=2;
 	private static final int ROUND_LUMBERJACK=200;
 	private static final int ROUND_TANK=1500;
 	private static final int MIN_TANKS=0;
 	private static final int BULLETS_NEEDED=200;
-
-	public float distanceFromArchon;
-	public MapLocation lastKnownArchonLocation;
 	
 	public GardenerLogic (RobotController rc) throws GameActionException{
 		super(rc);
@@ -28,16 +24,21 @@ public class GardenerLogic extends RobotLogic{
 	public void run() throws GameActionException{
 		
 		boolean isDead=false;
+		int birthRound=rc.getRoundNum();
 		
 		while(true){
 			
 			try {
 				
 				Direction dir = randomDirection();
-	            
+				
 				gameInfo();
-			
-				if (trees.length > NO_TREES && !isInDanger() && rc.readBroadcast(FARMING_GARDENER)!=rc.getID()){
+				trySenseEnemyArchon();
+			    
+				if(rc.readBroadcastBoolean(ENEMY_ARCHON_KILLED)) winningStrategy();
+			    
+				
+		    	if (trees.length > NO_TREES && !isInDanger() && rc.readBroadcast(FARMING_GARDENER)!=rc.getID()){
 	            	MapLocation treeLocation=trees[0].getLocation();
 	            	Direction toTree=myLocation.directionTo(treeLocation);
 	            	if(!moved) tryMove(toTree);
@@ -60,39 +61,45 @@ public class GardenerLogic extends RobotLogic{
                 	rc.broadcast(FARMING_GARDENER, rc.getID());
                 	farmStrategy();
                 }
-	           
 	            
-	            if(shouldBuildTank()) {
-	                rc.buildRobot(RobotType.TANK, dir);
-	                setNumSoldier(+1);
-	            }
-	            
-	            if(rc.readBroadcastBoolean(FARM_ZONE)  && getNumLumberjack()<=1 && rc.canBuildRobot(RobotType.LUMBERJACK, randomDirection())){
-            		rc.buildRobot(RobotType.LUMBERJACK, dir);
-            		setNumLumberjack(+1);
-            	}
-	            
-	            if (shouldBuildScout()) {
-	                rc.buildRobot(RobotType.SCOUT, dir);
-	                setNumScout(+1);
-	            } 
-	            
-	            if (shouldBuildSoldier()) {
-	                rc.buildRobot(RobotType.SOLDIER, dir);
-	                setNumSoldier(+1);
-	            } 
-	           
-	            if (rc.getTeamBullets()>TREE_BULLET && trees.length<=MAX_TREES && rc.canPlantTree(dir)){
+	            if(rc.getRoundNum()-birthRound<130 && rc.canPlantTree(dir) && trees.length<MAX_TREES){
 	            	rc.plantTree(dir);
 	            }
+	            else{
 	            
-	            if (shouldBuildLumberjack()) {
-	                rc.buildRobot(RobotType.LUMBERJACK, dir);
-	                setNumLumberjack(+1);
-	            }
-	          
-	            if(!moved) tryMove(dir);
-	            
+		            if(shouldBuildTank()) {
+		                rc.buildRobot(RobotType.TANK, dir);
+		                setNumTank(+1);
+		            }
+		            
+		            if(rc.readBroadcastBoolean(FARM_ZONE)  && getNumLumberjack()<=1 && rc.canBuildRobot(RobotType.LUMBERJACK, randomDirection())){
+	            		rc.buildRobot(RobotType.LUMBERJACK, dir);
+	            		setNumLumberjack(+1);
+	            	}
+		            
+		            if (shouldBuildScout()) {
+		                rc.buildRobot(RobotType.SCOUT, dir);
+		                setNumScout(+1);
+		            } 
+		            
+		            if (shouldBuildSoldier()) {
+		                rc.buildRobot(RobotType.SOLDIER, dir);
+		                setNumSoldier(+1);
+		            } 
+		           
+		            if (/*rc.getTeamBullets()>TREE_BULLET && trees.length<=MAX_TREES*/ rc.getRoundNum()%100<5 && rc.canPlantTree(dir)){
+		            	rc.plantTree(dir);
+		            }
+		            
+		            if (shouldBuildLumberjack()) {
+		                rc.buildRobot(RobotType.LUMBERJACK, dir);
+		                setNumLumberjack(+1);
+		            }
+                }
+		          
+			    if(!moved) tryMove(dir);
+			       
+			    
 	            if(!isDead){
 	            	if(isDead()){ 
 	            		setNumGardener(-1);
@@ -141,4 +148,11 @@ public class GardenerLogic extends RobotLogic{
 	public boolean shouldBuildTank() throws GameActionException {
 		return ((rc.getRobotCount()>=21 || rc.getRoundNum()>ROUND_TANK) && getNumTank()== MIN_TANKS && rc.canBuildRobot(RobotType.TANK, randomDirection()));
 	}
+	
+	public void winningStrategy() throws GameActionException{  
+		if (rc.getTeamBullets() >= (GameConstants.VICTORY_POINTS_TO_WIN - rc.getTeamVictoryPoints())* rc.getVictoryPointCost()) {
+			rc.donate(rc.getTeamBullets());
+		}
+	}
+
 }

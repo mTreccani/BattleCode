@@ -18,26 +18,31 @@ public class TankLogic extends RobotLogic{
 	        try {
 	            
 	            gameInfo();
+	            trySenseEnemyArchon();
+	            enemyArchonKilled();
 	            
-                tankSquadStrategy();
-                
-	            if(enemyRobots.length > 0) {
-	            	tryShoot();
-	                MapLocation enemyLocation = enemyRobots[0].getLocation();
-	                Direction toEnemy = myLocation.directionTo(enemyLocation);
-                	if(!moved) tryMove(toEnemy);
+	            if(!rc.readBroadcastBoolean(ENEMY_ARCHON_KILLED)){
+	                tankSquadStrategy();
+	                
+		            if(enemyRobots.length > 0) {
+		            	if(!attacked) tryShoot();
+		                MapLocation enemyLocation = enemyRobots[0].getLocation();
+		                Direction toEnemy = myLocation.directionTo(enemyLocation);
+	                	if(!moved) tryMove(toEnemy);
+		            }
+		            else{
+		            	totalHelpStrategy();
+		            }
+		            
+		            if(rc.getRoundNum()>2000){
+	                	if(!moved) tryMove(toEnemyArchon);
+	                }
+		            
+		            if(!moved) tryMove(randomDirection());
 	            }
 	            else{
-	            	totalHelpStrategy();
+	            	killThemAll();
 	            }
-	            
-	            if(rc.getRoundNum()>2000){
-                	MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy);
-                	Direction toEnemyArchon = myLocation.directionTo(enemyArchon[0]);
-                	if(!moved) tryMove(toEnemyArchon);
-                }
-	            
-	            if(!moved) tryMove(randomDirection());
 	            
 	            if(!isDead){
 	            	if(isDead()) {

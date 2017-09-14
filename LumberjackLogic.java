@@ -19,6 +19,7 @@ public class LumberjackLogic extends RobotLogic {
             try {
 
                 gameInfo();
+                trySenseEnemyArchon();
        
                 if(rc.readBroadcastBoolean(FARM_ZONE) && (rc.readBroadcast(FARMING_LUMBERJACK)==0 || rc.readBroadcast(FARMING_LUMBERJACK)==rc.getID())){
                 	rc.broadcast(FARMING_LUMBERJACK, rc.getID());
