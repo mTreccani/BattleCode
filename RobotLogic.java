@@ -23,6 +23,8 @@ public abstract class RobotLogic {
 	 public static final float SOLAR_ANGLE_2=0.0f;
 	 public static final float SOLAR_ANGLE_3=+0.45f;
 	 boolean farm=false;
+	 int i = 0;
+	 int j=0;
 
 	 
 	 //canali broadcast
@@ -55,6 +57,8 @@ public abstract class RobotLogic {
 	 public static final int SOLAR_1=21;
 	 public static final int SOLAR_2=22;
 	 public static final int SOLAR_3=23;
+	 public static final int FORMICA_X=100;
+	 public static final int FORMICA_Y=100;
 
 	 
 	 
@@ -155,7 +159,43 @@ public abstract class RobotLogic {
 		 tryMove(dir); 
 			
 	 }
+	
+	
+	
+	 public void seguiFormica() throws GameActionException{
+		 gameInfo();
+		 float prossimoPassoX = rc.readBroadcastFloat(FORMICA_X+j);		
+		 j++;
+		 
+		 float prossimoPassoY = rc.readBroadcastFloat(FORMICA_Y+j);
+		 j++;
+		
+		 tryMove(new Direction(prossimoPassoX,prossimoPassoY));
+		  }
+	 	
 	 
+	public void formica() throws GameActionException {
+	    	
+	    gameInfo();
+	   	float allyArchonX = rc.readBroadcastFloat(ARCHON_LOCATION_X);
+		float allyArchonY = rc.readBroadcastFloat(ARCHON_LOCATION_Y);    		
+	   	if(!(isInDanger()) && rc.getRoundNum()%20==0 && i<40) {
+	   		MapLocation myLocation = rc.getLocation();
+	   		rc.broadcastFloat(FORMICA_X+i, myLocation.x);
+	   		rc.broadcastFloat(FORMICA_Y+i+1, myLocation.y);
+    		i=i+2;
+    		MapLocation [] enemyLocationArchon = rc.getInitialArchonLocations(enemy);
+    		Direction enemyLocation = myLocation.directionTo(enemyLocationArchon[0]);
+			tryMove(enemyLocation);
+		}else if(isInDanger()) {
+    		tryShoot();
+    	}else{
+    		MapLocation [] enemyLocationArchon = rc.getInitialArchonLocations(enemy);
+    		Direction enemyLocation = myLocation.directionTo(enemyLocationArchon[0]);
+    		tryMove(enemyLocation);
+    	}
+    
+    }	 
 	 /**
 	  * tattica che fa spostare truppe di tipo lumberjack e gardner verso zone sicure in cui sono
 	  * presenti alberi comunicate dalla exploreStrategy()
@@ -382,8 +422,8 @@ public abstract class RobotLogic {
 	
 	 
 	 /**
-	  * è in pericolo se ci sono nemici nelle vicinanze 
-	  * @return TRUE: se è in pericolo FALSE: se non lo è 
+	  * Ã¨ in pericolo se ci sono nemici nelle vicinanze 
+	  * @return TRUE: se Ã¨ in pericolo FALSE: se non lo Ã¨ 
 	  */
 	 boolean isInDanger(){
 		 
@@ -405,8 +445,8 @@ public abstract class RobotLogic {
 	 }
 	 
 	 /**
-	  * controlla se l'archon è in pericolo
-	  * @return TRUE: se è in pericolo, FALSE: se non lo è
+	  * controlla se l'archon Ã¨ in pericolo
+	  * @return TRUE: se Ã¨ in pericolo, FALSE: se non lo Ã¨
 	  * @throws GameActionException
 	  */
 	 public boolean isArchonInDanger() throws GameActionException{
@@ -422,7 +462,7 @@ public abstract class RobotLogic {
     }
 
     /**
-     * controlla se la truppa è morta
+     * controlla se la truppa Ã¨ morta
      * @param birthRound round di creazione della truppa
      * @return
      * @throws GameActionException 
@@ -437,7 +477,7 @@ public abstract class RobotLogic {
     }
     
     /**
-     * controlla se la truppa può sparare e in caso contrartio esegue la matrixStrategy()
+     * controlla se la truppa puÃ² sparare e in caso contrartio esegue la matrixStrategy()
      * @throws GameActionException
      */
     public void tryShoot() throws GameActionException{
@@ -503,7 +543,7 @@ public abstract class RobotLogic {
      * cerca di muovere la truppa nella direzione data
      *
      * @param dir la direzione in cui si vuole far muovere la truppa
-     * @return TRUE: se il movimento è stato eseguito FALSE: se non è stato eseguito
+     * @return TRUE: se il movimento Ã¨ stato eseguito FALSE: se non Ã¨ stato eseguito
      * @throws GameActionException
      */
     boolean tryMove(Direction dir) throws GameActionException {
@@ -516,7 +556,7 @@ public abstract class RobotLogic {
      * @param dir la direzione in cui si vuole far muovere la truppa
      * @param degreeOffset spazio tra le direzioni controllate
      * @param checksPerSide numero di direzioni controllate su ogni lato nel caso non sia possibile utilizzare quella data
-     * @return TRUE: se il movimento è stato eseguito FALSE: se non è stato eseguito
+     * @return TRUE: se il movimento Ã¨ stato eseguito FALSE: se non Ã¨ stato eseguito
      * @throws GameActionException
      */
     boolean tryMove(Direction dir, float degreeOffset, int checksPerSide) throws GameActionException {
