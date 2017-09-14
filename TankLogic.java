@@ -6,40 +6,47 @@ public class TankLogic extends RobotLogic{
 
 	public TankLogic (RobotController rc) throws GameActionException{
 		super(rc);
-		//setNumTank(+1);
 	}
 	
 	@Override
 	public void run() throws GameActionException{
 		
-		int birthRound=rc.getRoundNum();
 		boolean isDead=false;
 	
-        //codice che viene eseguito ogni round
         while(true){
         		
-			//il try/catch gestisce le eccezioni che altrimenti farebbero scomparire il robot
 	        try {
 	            
 	            gameInfo();
-	
-	            tryShoot();
 	            
+                tankSquadStrategy();
+                
 	            if(enemyRobots.length > 0) {
+	            	tryShoot();
 	                MapLocation enemyLocation = enemyRobots[0].getLocation();
 	                Direction toEnemy = myLocation.directionTo(enemyLocation);
-                	tryMove(toEnemy);
+                	if(!moved) tryMove(toEnemy);
 	            }
 	            else{
-		            tryMove(randomDirection());
+	            	totalHelpStrategy();
 	            }
+	            
+	            if(rc.getRoundNum()>2000){
+                	MapLocation[] enemyArchon = rc.getInitialArchonLocations(enemy);
+                	Direction toEnemyArchon = myLocation.directionTo(enemyArchon[0]);
+                	if(!moved) tryMove(toEnemyArchon);
+                }
+	            
+	            if(!moved) tryMove(randomDirection());
 	            
 	            if(!isDead){
-	            	if(isDead(birthRound)) setNumTank(-1);
-	            	isDead=true;
+	            	if(isDead()) {
+	            		setNumTank(-1);
+	            		isDead=true;
+	            		if(rc.readBroadcast(SQUAD_0)==rc.getID()) rc.broadcast(SQUAD_0, 0);
+	            	}
 	            }
 	            
-                // Clock.yield() fa terminare il round
 	            Clock.yield();
 	
 	        } catch (Exception e) {

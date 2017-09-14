@@ -20,8 +20,8 @@ public class ArchonLogic extends RobotLogic{
         rc.broadcast(VIKING_1, 0);
         rc.broadcast(VIKING_2, 0);
         rc.broadcast(VIKING_3, 0);
-        rc.broadcast(I_HAVE_BEEN_HIT_X, 0);
-        rc.broadcast(I_HAVE_BEEN_HIT_Y, 0);
+        rc.broadcast(ENEMY_FOUND_X, 0);
+        rc.broadcast(ENEMY_FOUND_Y, 0);
         rc.broadcast(ROMAN_EMPIRE_1, 0);
         rc.broadcast(ROMAN_EMPIRE_2, 0);
         rc.broadcast(ROMAN_EMPIRE_3, 0);
@@ -34,13 +34,19 @@ public class ArchonLogic extends RobotLogic{
         rc.broadcast(SOLAR_2, 0);
         rc.broadcast(SOLAR_3, 0);
         rc.broadcastBoolean(IS_A_GOOD_ROAD, false);
+        rc.broadcast(TANK_1,0);
+        rc.broadcast(TANK_2,0);
+        rc.broadcast(SQUAD_0, 0);
+        rc.broadcast(SQUAD_1, 0);
+        rc.broadcast(SQUAD_2, 0);
+        rc.broadcast(SQUAD_3, 0);
+        rc.broadcastBoolean(FORMICA, false);
 
         
-        //codice che viene eseguito ogni round
         while (true) {
 
-            //il try/catch gestisce le eccezioni che altrimenti farebbero scomparire il robot
             try {
+
                 gameInfo();
 
                 rc.broadcastFloat(ARCHON_LOCATION_X, myLocation.x);
@@ -51,7 +57,6 @@ public class ArchonLogic extends RobotLogic{
                 	matrixStrategy();
                 }
                
-                // Randomly attempt to build a gardener in this direction
                 if (shouldBuildGardener()) {
                     rc.hireGardener(randomDirection());
                     setNumGardener(+1);
@@ -59,9 +64,8 @@ public class ArchonLogic extends RobotLogic{
                 
                 angolo+=0.5;
                 Direction dir = new Direction(angolo);
-       		    tryMove(dir); 
+       		    if(!moved) tryMove(dir); 
 
-                // Clock.yield() fa terminare il round
                 Clock.yield();
 
             } catch (Exception e) {
@@ -71,19 +75,10 @@ public class ArchonLogic extends RobotLogic{
         }
 	}
 	
-	/**
-	 * controlla se l'archon può creare il gardener
-	 * @return TRUE: se è possibile FALSE: se non lo è
-	 * @throws GameActionException
-	 */
 	public boolean shouldBuildGardener() throws GameActionException{
 		return (rc.canHireGardener(randomDirection()) &&  rc.getTeamBullets() >= 200 && !isInDanger() && getNumGardener()<=2);
 	}
 	
-	/**
-	 * controlla se l'archon è in pericolo
-	 * @throws GameActionException
-	 */
 	public void archonInDanger() throws GameActionException{
 		
 		if(enemyRobots.length>0){

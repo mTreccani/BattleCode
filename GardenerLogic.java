@@ -2,60 +2,57 @@ package examplefuncsplayer;
 import battlecode.common.*;
 
 public class GardenerLogic extends RobotLogic{
+	
 	private static final int NO_SCOUT_NEEDED=1500;
 	private static final int NO_TREES=0;
-	private static final int TREEBULLET=100;
-	private static final int MAXTREES=4;
-	private static final int MAXSCOUTS=3;
-	private static final int MAXSOLDIERS=5;
-	private static final int MAXLUMBERJACKS=3;
-	private static final int MINLUMBERJACKS=0;
-	private static final int TREESLUMBERJACK=2;
-	private static final int ROUNDLUMBERJACK=200;
-	private static final int ROUNDTANK=600;
-	private static final int MINTANKS=0;
-	
+	private static final int TREE_BULLET=100;
+	private static final int MAX_TREES=1;
+	private static final int MAX_SCOUTS=3;
+	private static final int MAX_SOLDIERS=10;
+	private static final int MAX_LUMBERJACKS=3;
+	private static final int MIN_LUMBERJACKS=0;
+	private static final int TREES_LUMBERJACK=2;
+	private static final int ROUND_LUMBERJACK=200;
+	private static final int ROUND_TANK=1500;
+	private static final int MIN_TANKS=0;
+	private static final int BULLETS_NEEDED=200;
+
 	public float distanceFromArchon;
 	public MapLocation lastKnownArchonLocation;
 	
 	public GardenerLogic (RobotController rc) throws GameActionException{
 		super(rc);
-		//setNumGardener(+1);
 	}
 	
 	@Override
 	public void run() throws GameActionException{
 		
-		int birthRound=rc.getRoundNum();
 		boolean isDead=false;
 		
-        //codice che viene eseguito ogni round
 		while(true){
 			
-            //il try/catch gestisce le eccezioni che altrimenti farebbero scomparire il robot
 			try {
+				
+				Direction dir = randomDirection();
 	            
 				gameInfo();
-				
-				/*lastKnownArchonLocation= new MapLocation(rc.readBroadcastFloat(ARCHON_LOCATION_X), rc.readBroadcastFloat(ARCHON_LOCATION_Y));
-	            distanceFromArchon=myLocation.distanceTo(lastKnownArchonLocation);
-	            
-	            if(distanceFromArchon>25 && getNumGardener()<2){
-	            	Direction toMyArchon = myLocation.directionTo(lastKnownArchonLocation);
-	            	tryMove(toMyArchon);
-	            }*/
-	            
+			
 				if (trees.length > NO_TREES && !isInDanger() && rc.readBroadcast(FARMING_GARDENER)!=rc.getID()){
 	            	MapLocation treeLocation=trees[0].getLocation();
 	            	Direction toTree=myLocation.directionTo(treeLocation);
-	            	tryMove(toTree);
+	            	if(!moved) tryMove(toTree);
 	            	if(rc.canWater(treeLocation)){
 	            		rc.water(treeLocation);
 	            	}
+	            	if(getNumLumberjack()==0 && rc.canBuildRobot(RobotType.LUMBERJACK, randomDirection())){
+	            		rc.buildRobot(RobotType.LUMBERJACK, dir);
+	            		setNumLumberjack(+1);
+	            	}
 	            }
+				
 				if(isInDanger()){
-					rc.broadcastFloat(I_HAVE_BEEN_HIT_X, myLocation.x);
-					rc.broadcastFloat(I_HAVE_BEEN_HIT_Y, myLocation.y);
+					rc.broadcastFloat(ENEMY_FOUND_X, myLocation.x);
+					rc.broadcastFloat(ENEMY_FOUND_Y, myLocation.y);
 					matrixStrategy();
 				}
 				
@@ -64,43 +61,47 @@ public class GardenerLogic extends RobotLogic{
                 	farmStrategy();
                 }
 	           
-	            Direction dir = randomDirection();
 	            
-	            if(getNumLumberjack()<1){
-	            	rc.canBuildRobot(RobotType.LUMBERJACK, randomDirection());
-	            	rc.buildRobot(RobotType.LUMBERJACK, dir);
-                    setNumLumberjack(+1);
-	            }
-	            if (shouldBuildSoldier()) {
-	                rc.buildRobot(RobotType.SOLDIER, dir);
+	            if(shouldBuildTank()) {
+	                rc.buildRobot(RobotType.TANK, dir);
 	                setNumSoldier(+1);
-	            } 
+	            }
+	            
+	            if(rc.readBroadcastBoolean(FARM_ZONE)  && getNumLumberjack()<=1 && rc.canBuildRobot(RobotType.LUMBERJACK, randomDirection())){
+            		rc.buildRobot(RobotType.LUMBERJACK, dir);
+            		setNumLumberjack(+1);
+            	}
+	            
 	            if (shouldBuildScout()) {
 	                rc.buildRobot(RobotType.SCOUT, dir);
 	                setNumScout(+1);
 	            } 
+	            
+	            if (shouldBuildSoldier()) {
+	                rc.buildRobot(RobotType.SOLDIER, dir);
+	                setNumSoldier(+1);
+	            } 
+	           
+	            if (rc.getTeamBullets()>TREE_BULLET && trees.length<=MAX_TREES && rc.canPlantTree(dir)){
+	            	rc.plantTree(dir);
+	            }
+	            
 	            if (shouldBuildLumberjack()) {
 	                rc.buildRobot(RobotType.LUMBERJACK, dir);
 	                setNumLumberjack(+1);
 	            }
-	            if (shouldBuildTank()) {
-	                rc.buildRobot(RobotType.TANK, dir);
-	                setNumTank(+1);
-	            }
-	            if (rc.getTeamBullets()>TREEBULLET && trees.length<MAXTREES && rc.canPlantTree(dir)){
-	            	rc.plantTree(dir);
-	            }
-	            
-	            // Move randomly
-	            tryMove(dir);
+	          
+	            if(!moved) tryMove(dir);
 	            
 	            if(!isDead){
-	            	if(isDead(birthRound)) setNumGardener(-1);
-	            	if(rc.readBroadcast(FARMING_GARDENER)==rc.getID()) rc.broadcast(FARMING_GARDENER, 0);
-	            	isDead=true;
+	            	if(isDead()){ 
+	            		setNumGardener(-1);
+	            		if(rc.readBroadcast(FARMING_GARDENER)==rc.getID()) rc.broadcast(FARMING_GARDENER, 0);
+	            		isDead=true;
+	            	}
 	            }
 	
-                // Clock.yield() fa terminare il round
+	            // Clock.yield() makes the robot wait until the next turn, then it will perform this loop again
 	            Clock.yield();
 	        } catch (Exception e) {
 	        	System.out.println("Gardener Exception");
@@ -108,33 +109,36 @@ public class GardenerLogic extends RobotLogic{
 	        }	
 		}		
 	}
+	
 	/**
-	 * controlla quando è possibile creare uno scout
-	 * @return  TRUE: se è possibile FALSE: se non lo è
+	 * Decides when it's possible to build Scouts
+	 * @return  TRUE: When it's possible FALSE: When it's not
 	 */
 	public boolean shouldBuildScout() throws GameActionException{
-		return (getNumScout()< MAXSCOUTS && rc.getRoundNum()< NO_SCOUT_NEEDED && rc.canBuildRobot(RobotType.SCOUT, randomDirection()));
+		return (getNumScout()<= MAX_SCOUTS && rc.getRoundNum()< NO_SCOUT_NEEDED && getNumScout()<=getNumSoldier() && rc.canBuildRobot(RobotType.SCOUT, randomDirection()));
 	}
+
 	/**
-	 * controlla quando è possibile creare un soldier
-	 * @return  TRUE: se è possibile FALSE: se non lo è
+	 * Decides when it's possible to build Soldiers
+	 * @return  TRUE: When it's possible FALSE: When it's not
 	 */
 	public boolean shouldBuildSoldier() throws GameActionException {
-		return ((isInDanger() && rc.canBuildRobot(RobotType.SOLDIER, randomDirection())) || getNumSoldier()< MAXSOLDIERS);
-	}
-	/**
-	 * controlla quando è possibile creare un Lumberjack
-	 * @return  TRUE: se è possibile FALSE: se non lo è
-	 */
-	public boolean shouldBuildLumberjack() throws GameActionException {
-		return (getNumLumberjack()<=MAXLUMBERJACKS && (trees.length>=TREESLUMBERJACK || (rc.getRoundNum()>ROUNDLUMBERJACK && getNumLumberjack()==MINLUMBERJACKS)) && rc.canBuildRobot(RobotType.LUMBERJACK, randomDirection()));
-	}
-	/**
-	 * controlla quando è possibile creare un Tank
-	 * @return  TRUE: se è possibile FALSE: se non lo è
-	 */
-	public boolean shouldBuildTank() throws GameActionException {
-		return (rc.getRoundNum()>ROUNDTANK && getNumTank()== MINTANKS && rc.canBuildRobot(RobotType.TANK, randomDirection()));
+		return (rc.canBuildRobot(RobotType.SOLDIER, randomDirection()) && (isInDanger() || (getNumSoldier()<= MAX_SOLDIERS && rc.getTeamBullets()> BULLETS_NEEDED)));
 	}
 	
+	/**
+	 * Decides when it's possible to build Lumberjacks
+	 * @return  TRUE: When it's possible FALSE: When it's not
+	 */
+	public boolean shouldBuildLumberjack() throws GameActionException {
+		return (getNumLumberjack()<=MAX_LUMBERJACKS && (trees.length>=TREES_LUMBERJACK || (rc.getRoundNum()>ROUND_LUMBERJACK && getNumLumberjack()==MIN_LUMBERJACKS)) && rc.canBuildRobot(RobotType.LUMBERJACK, randomDirection()));
+	}
+	
+	/**
+	 * Decides when it's possible to build Tanks
+	 * @return  TRUE: When it's possible FALSE: When it's not
+	 */
+	public boolean shouldBuildTank() throws GameActionException {
+		return ((rc.getRobotCount()>=21 || rc.getRoundNum()>ROUND_TANK) && getNumTank()== MIN_TANKS && rc.canBuildRobot(RobotType.TANK, randomDirection()));
+	}
 }

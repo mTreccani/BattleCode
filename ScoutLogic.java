@@ -9,7 +9,6 @@ public class ScoutLogic extends RobotLogic{
 	
 	public ScoutLogic (RobotController rc) throws GameActionException{
 		super(rc);
-		//setNumScout(+1);
 	}
 	
 	@Override
@@ -18,15 +17,14 @@ public class ScoutLogic extends RobotLogic{
 		int birthRound=rc.getRoundNum();
 		boolean isDead=false;
 		
-        //codice che viene eseguito ogni round
 		while(true){
 		
-            //il try/catch gestisce le eccezioni che altrimenti farebbero scomparire il robot
 	        try {
 	        	
+	        	boolean timeToRun=rc.getRoundNum()-birthRound < 70 || (rc.getRoundNum()-birthRound > 300 && rc.getRoundNum()-birthRound <= 350);
 	        	gameInfo();
 	
-	        	if(rc.getRoundNum()-birthRound < 70 || (rc.getRoundNum()-birthRound > 300 && rc.getRoundNum()-birthRound <= 350)){
+	        	if(timeToRun){
 	        		runnerStrategy();
 	        	}
 	        	else{
@@ -34,25 +32,21 @@ public class ScoutLogic extends RobotLogic{
 	        	}
 	        	
 	        	if(!isDead){
-	        		if(isDead(birthRound)) setNumScout(-1);
+	        		if(isDead()) setNumScout(-1);
 	        		whichScoutIsDead();
 	        		isDead=true;
 	        	}
-                // Clock.yield() fa terminare il round
+	        	
 	        	Clock.yield();
 	        
 	        } catch (Exception e) {
 	            System.out.println("Scout Exception");
 	            e.printStackTrace();
+	            Clock.yield();
 	        }
 		}
 	}
 
-	
-	/**
-	 * controlla quale scout è morto per la tattica solare
-	 * @throws GameActionException
-	 */
 	public void whichScoutIsDead() throws GameActionException {
 		if(rc.readBroadcast(SOLAR_1)==rc.getID()) {
 			rc.broadcast(SOLAR_1, 0);
