@@ -90,10 +90,20 @@ public class ArchonLogic extends RobotLogic{
         }
 	}
 	
+	 /**
+	  * metodo che stabilisce se è il momento di produrre un gardener
+	  * @return TRUE se è il momento, FALSE altrimenti
+	  * @throws GameActionException
+	  */
 	public boolean shouldBuildGardener() throws GameActionException{
 		return (rc.canHireGardener(randomDirection()) &&  rc.getTeamBullets() >= 200 && !isInDanger() && getNumGardener()<=2);
 	}
 	
+	/**
+	 * metodo che controlla se l'archon è in nemico, in caso affermativo
+	 * lo fa sapere in broadcast agli alleati
+	 * @throws GameActionException
+	 */
 	public void archonInDanger() throws GameActionException{
 		
 		if(enemyRobots.length>0){

@@ -6,7 +6,6 @@ public class SoldierLogic extends RobotLogic{
 	
 	public SoldierLogic (RobotController rc) throws GameActionException{
 		super(rc);
-		//setNumSoldier(+1);
 	}
 	
 	@Override
@@ -54,6 +53,7 @@ public class SoldierLogic extends RobotLogic{
 	            }
 	            else{
 	            	killThemAll();
+	            	if(!moved) tryMove(randomDirection());
 	            }
 	            
 	            if(!isDead){

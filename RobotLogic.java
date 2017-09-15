@@ -100,8 +100,17 @@ public abstract class RobotLogic {
 		 bullets = rc.senseNearbyBullets(rc.getType().bodyRadius+1);
 	 }
 	 
+	 /**
+	 * metodo astratto da implementare in ogni classe
+	 * @throws GameActionException
+	 */
 	 public abstract void run() throws GameActionException;
 	 
+	 /**
+	 * tattica che fa muvovere il robot lungo la mappa implementatndo la strategia solare
+	 * e la strategia matrix nel caso ci siano robot nemici vicini
+	 * @throws GameActionException
+	 */
 	 public void runnerStrategy() throws GameActionException{
 		 
 		 gameInfo();
@@ -120,6 +129,11 @@ public abstract class RobotLogic {
 		 
 	 }
 	
+	 /**
+	 * tattica per l'esplorazione della mappa e per la comunicazione in broadcast
+	 * della presenza di aree con alberi e senza nemici
+	 * @throws GameActionException
+	 */
 	 public void exploreStrategy() throws GameActionException{
 		 
 		 gameInfo();
@@ -211,9 +225,14 @@ public abstract class RobotLogic {
 			 Direction toAllyArchon= myLocation.directionTo(allyArchon);
 			 if(!moved) tryMove(toAllyArchon);
 		 }
-	}
+	 }
 
 
+	 /**
+	 * tattica che fa spostare truppe di tipo lumberjack e gardner verso zone sicure,
+	 * comunicate dalla exploreStrategy(), dove produrre unità e tagliare alberi
+	 * @throws GameActionException
+	 */
 	 public void farmStrategy() throws GameActionException{
 		 
 		 gameInfo();
@@ -245,6 +264,11 @@ public abstract class RobotLogic {
 		 if(trees.length==0 && !moved) tryMove(toAllyArchon);
 	 }
 	 
+	 /**
+	 * metodo per l'assegnamento di determinate direzioni da seguire ai robot
+	 * @return l'angolo di movimento
+	 * @throws GameActionException
+	 */
      public float solarStrategy() throws GameActionException{
 		 
     	 if (rc.readBroadcast(SOLAR_1)==0 || rc.readBroadcast(SOLAR_1)==rc.getID())
@@ -266,7 +290,12 @@ public abstract class RobotLogic {
 		
 	 }
 
-	 
+     /**
+     * tattica che invia soldati verso l'archon nemico in determinate condizioni, 
+     * definite dalla distanza, dal numero di round trascorsi e di soldati e dalla presenza o meno
+     * di nemici nelle vicinanze
+     * @throws GameActionException
+     */
 	 public void vikingStrategy() throws GameActionException{
 	
 		 gameInfo();
@@ -307,7 +336,7 @@ public abstract class RobotLogic {
 	             Direction toEnemy = myLocation.directionTo(enemyLocation);
              	 if(!moved) tryMove(toEnemy);
 			 }
-			 else if((getNumSoldier()>8 || rc.getRoundNum()>2500) && !nearEnemyArchon){
+			 else if((getNumSoldier()>7 || rc.getRoundNum()>2500) && !nearEnemyArchon){
              	 if(!moved) tryMove(toEnemyArchon);
 			 }
 			 else{
@@ -319,13 +348,22 @@ public abstract class RobotLogic {
 		 }
 	 }
 	 
+	 /**
+	 * tattica destinata alle unità combattive per il soccorso dell'archon
+	 * e di alleati in pericolo in determinate condizioni
+	 * @throws GameActionException
+	 */
 	 public void totalHelpStrategy() throws GameActionException{
 		 
 		 gameInfo();
+		 float allyArchonX = rc.readBroadcastFloat(ARCHON_LOCATION_X);
+		 float allyArchonY = rc.readBroadcastFloat(ARCHON_LOCATION_Y);
+		 MapLocation allyArchon = new MapLocation(allyArchonX,allyArchonY);
+		 boolean nearAllyArchon = myLocation.isWithinDistance(allyArchon, 35);
 		 
 		 if(isArchonInDanger()){
 			 
-			 if(rc.getType()==RobotType.SOLDIER || rc.getType()==RobotType.TANK){
+			 if((rc.getType()==RobotType.SOLDIER || rc.getType()==RobotType.TANK || rc.getType()==RobotType.LUMBERJACK) && nearAllyArchon){
 				 MapLocation myArchon= new MapLocation(rc.readBroadcastFloat(ARCHON_LOCATION_X),rc.readBroadcastFloat(ARCHON_LOCATION_Y));
 				 Direction toMyArchon= rc.getLocation().directionTo(myArchon);
 				 if(!moved) tryMove(toMyArchon);
@@ -351,6 +389,11 @@ public abstract class RobotLogic {
 		 }
 	 }
 	 
+	 /**
+	 * tattica difensiva tale per cui 3 soldati stanno nelle vicinanze
+	 * dell'archon per difenderlo in caso di nemici nelle vicinanze
+	 * @throws GameActionException
+	 */
 	 public void romanEmpireStrategy() throws GameActionException{
 		 
 		 gameInfo();
@@ -383,8 +426,13 @@ public abstract class RobotLogic {
 					if(!moved) tryMove(dir);
 				}
 			}
-		 }
+	 }
 	 
+	 /**
+	 * tattica che permette alle unità di provare ad evitare i colpi dei
+	 * nemici, scegliendo la direzione migliore in cui muoversi
+	 * @throws GameActionException
+	 */
 	 public void matrixStrategy() throws GameActionException {
 	   	 gameInfo();
 		 MapLocation enemyLocation = enemyRobots[0].location;
@@ -406,6 +454,12 @@ public abstract class RobotLogic {
 	   	 if(!moved) tryMove(farFromEnemy.rotateLeftDegrees(bestAngle));
    	 }
 	 
+	 /**
+	 * metodo che calcola il danno che si aspetta di subire dai proiettili nelle vicinanze
+	 * @param bullets proiettili nemici nelle vicinanze
+	 * @param loc
+	 * @return
+	 */
 	 public float expectedDamage(BulletInfo[] bullets, MapLocation loc) {
 	   	 float totalDamage = 0;
 	   	 for (BulletInfo bullet : bullets) {
@@ -462,6 +516,11 @@ public abstract class RobotLogic {
 		 }
 	 }
 	 
+	 /**
+	  * metodo che permette alle unità di mandare in broadcast la nuova posizione 
+	  * dell'archon nemico, se questo viene localizzato
+	  * @throws GameActionException
+	  */
 	 public void trySenseEnemyArchon() throws GameActionException{
 		 
 		 gameInfo();
@@ -476,6 +535,12 @@ public abstract class RobotLogic {
 		 }
 	 }
 	 
+	 /**
+	  * metodo che permette di leggere in Broadcast la posizione 
+	  * dell'archon nemico e creare la direzione verso lui
+	  *@return toEnemyArchon: la direzione verso L'archon nemico 
+	  *@throws GameActionException
+	  */
 	 public Direction directionToEnemyArchon() throws GameActionException{
 		 
 		 float enemyArchonX= rc.readBroadcastFloat(ENEMY_ARCHON_X);
@@ -487,9 +552,10 @@ public abstract class RobotLogic {
 
 	
 	 /**
-	  * è in pericolo se ci sono nemici nelle vicinanze 
-	  * @return true se è in pericolo
-	  */
+	 * metodo che stabilisce se il robot è in pericolo, ovvero se ci sono
+	 * nemici nelle vicinanze
+	 * @return TRUE: se è in pericolo, FALSE altrimenti
+	 */
 	 boolean isInDanger() throws GameActionException{
 		 
 		 gameInfo();
@@ -509,6 +575,11 @@ public abstract class RobotLogic {
 		 }
 	 }
 	 
+	 /**
+	 * metodo che controlla se l'archon è in pericolo
+	 * @return TRUE: se è in pericolo, FALSE altrimenti
+	 * @throws GameActionException
+	 */
 	 public boolean isArchonInDanger() throws GameActionException{
 	    	return rc.readBroadcastBoolean(IS_ARCHON_IN_DANGER);	
 	    }
@@ -521,6 +592,11 @@ public abstract class RobotLogic {
         return new Direction((float)Math.random() * 2 * (float)Math.PI);
     }
 
+    /**
+    * controlla se la truppa è da considerare morta
+    * @return TRUE: se si può considerare morta, FALSE altrimenti
+    * @throws GameActionException 
+    */
     public boolean isDead(){
     	if(rc.getHealth()<rc.getType().maxHealth/DEATH_DIVIDER) {
     		return true;
@@ -530,6 +606,10 @@ public abstract class RobotLogic {
     	}
     }
     
+    /**
+     * metodo che controlla se l'Archon nemico è considerabile morto
+     * @throws GameActionException
+     */
     public void enemyArchonKilled() throws GameActionException{
     	
     	gameInfo();
@@ -562,6 +642,9 @@ public abstract class RobotLogic {
 		}
     }
     
+    /**metodo che permette alle unità combattenti di attaccare i nemici senza ulteriori strategie
+     * @throws GameActionException
+    */
     public void killThemAll() throws GameActionException{
     	gameInfo();
     	RobotInfo[] targets=rc.senseNearbyRobots(myLocation, 50, enemy);
@@ -571,6 +654,12 @@ public abstract class RobotLogic {
     	if(!attacked) tryShoot();
     }
     
+    /**
+    * metodo che permette alle truppe di sparare, se possibile, 
+    * in base al loro tipo( soldier, tank, etc..) 
+    * in caso contrartio esegue la matrixStrategy()
+    * @throws GameActionException
+    */
     public void tryShoot() throws GameActionException{
     	
 		gameInfo();
@@ -632,25 +721,25 @@ public abstract class RobotLogic {
 	 }
     
     /**
-     * Attempts to move in a given direction, while avoiding small obstacles directly in the path.
-     *
-     * @param dir The intended direction of movement
-     * @return true if a move was performed
-     * @throws GameActionException
-     */
+    * cerca di muovere la truppa nella direzione data
+    *
+    * @param dir la direzione in cui si vuole far muovere la truppa
+    * @return TRUE: se il movimento è stato eseguito FALSE: se non è stato eseguito
+    * @throws GameActionException
+    */
     boolean tryMove(Direction dir) throws GameActionException {
         return tryMove(dir,20,3);
     }
 
     /**
-     * Attempts to move in a given direction, while avoiding small obstacles direction in the path.
-     *
-     * @param dir The intended direction of movement
-     * @param degreeOffset Spacing between checked directions (degrees)
-     * @param checksPerSide Number of extra directions checked on each side, if intended direction was unavailable
-     * @return true if a move was performed
-     * @throws GameActionException
-     */
+    * cerca di muovere la truppa nella direzione data
+    *
+    * @param dir la direzione in cui si vuole far muovere la truppa
+    * @param degreeOffset spazio tra le direzioni controllate
+    * @param checksPerSide numero di direzioni controllate su ogni lato nel caso non sia possibile utilizzare quella data
+    * @return TRUE: se il movimento è stato eseguito FALSE: se non è stato eseguito
+    * @throws GameActionException
+    */
     boolean tryMove(Direction dir, float degreeOffset, int checksPerSide) throws GameActionException {
 
         // First, try intended direction
@@ -683,12 +772,10 @@ public abstract class RobotLogic {
     }
 
     /**
-     * A slightly more complicated example function, this returns true if the given bullet is on a collision
-     * course with the current robot. Doesn't take into account objects between the bullet and this robot.
-     *
-     * @param bullet The bullet in question
-     * @return True if the line of the bullet's path intersects with this robot's current position.
-     */
+    * controlla se un proiettile sta intrando in collisione con il robot
+    * @param bullet il proiettile da controllare
+    * @return TRUE: se il percorso del proiettile incide la posizione del robot FALSE: se non la incide
+    */
     boolean willCollideWithMe(BulletInfo bullet) {
         MapLocation myLocation = rc.getLocation();
 
@@ -715,6 +802,9 @@ public abstract class RobotLogic {
         return (perpendicularDist <= rc.getType().bodyRadius);
     }
     
+    /**
+    * metodo che aggiorna parametri utili in ogni istante della partita
+    */
     public void gameInfo() throws GameActionException{
 		myLocation = rc.getLocation();
 		enemyRobots = rc.senseNearbyRobots(rc.getType().sensorRadius, enemy);
@@ -726,42 +816,92 @@ public abstract class RobotLogic {
 		toEnemyArchon=directionToEnemyArchon();
     }
    
+    /**
+    * ritorna il numero di scout
+    * @return il numero di scout
+    * @throws GameActionException
+    */
     public int getNumScout() throws GameActionException{
     	return rc.readBroadcast(NUM_SCOUT);
     }
     
+    /**
+    * setta il numero di scout
+    * @param n numero di truppe da aggiungere/rimuovere
+    * @throws GameActionException
+    */
     public void setNumScout(int n) throws GameActionException{
     	rc.broadcast(NUM_SCOUT, rc.readBroadcast(NUM_SCOUT) + n );
     }
     
+    /**
+     * ritorna il numero di soldiers
+     * @return il numero di soldiers
+     * @throws GameActionException
+     */
     public int getNumSoldier() throws GameActionException{
     	return rc.readBroadcast(NUM_SOLDIER);
     }
     
+    /**
+     * setta il numero di soldiers
+     * @param n numero di truppe da aggiungere/rimuovere
+     * @throws GameActionException
+     */
     public void setNumSoldier(int n) throws GameActionException{
     	rc.broadcast(NUM_SOLDIER, rc.readBroadcast(NUM_SOLDIER) + n );
     }
     
+    /**
+     * ritorna il numero di gardeners
+     * @return il numero di gardeners
+     * @throws GameActionException
+     */
     public int getNumGardener() throws GameActionException{
     	return rc.readBroadcast(NUM_GARDENER);
     }
     
+    /**
+     * setta il numero di gardeners
+     * @param n numero di truppe da aggiungere/rimuovere
+     * @throws GameActionException
+     */
     public void setNumGardener(int n) throws GameActionException{
     	rc.broadcast(NUM_GARDENER, rc.readBroadcast(NUM_GARDENER) + n );
     }
     
+    /**
+     * ritorna il numero di lumberjacks
+     * @return il numero di lumberjacks
+     * @throws GameActionException
+     */
     public int getNumLumberjack() throws GameActionException{
     	return rc.readBroadcast(NUM_LUMBERJACK);
     }
     
+    /**
+     * setta il numero di lumberjacks
+     * @param n numero di truppe da aggiungere/rimuovere
+     * @throws GameActionException
+     */
     public void setNumLumberjack(int n) throws GameActionException{
     	rc.broadcast(NUM_LUMBERJACK, rc.readBroadcast(NUM_LUMBERJACK) + n );
     }
     
+    /**
+     * ritorna il numero di tank
+     * @return il numero di tank
+     * @throws GameActionException
+     */
     public int getNumTank() throws GameActionException{
     	return rc.readBroadcast(NUM_TANK);
     }
     
+    /**
+     * setta il numero di tank
+     * @param n numero di truppe da aggiungere/rimuovere
+     * @throws GameActionException
+     */
     public void setNumTank(int n) throws GameActionException{
     	rc.broadcast(NUM_TANK, rc.readBroadcast(NUM_TANK) + n );
     }

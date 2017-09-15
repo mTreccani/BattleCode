@@ -5,7 +5,7 @@ public class GardenerLogic extends RobotLogic{
 	
 	private static final int NO_SCOUT_NEEDED=1500;
 	private static final int NO_TREES=0;
-	private static final int MAX_TREES=3;
+	private static final int MAX_TREES=2;
 	private static final int MAX_SCOUTS=3;
 	private static final int MAX_SOLDIERS=10;
 	private static final int MAX_LUMBERJACKS=2;
@@ -118,37 +118,46 @@ public class GardenerLogic extends RobotLogic{
 	}
 	
 	/**
-	 * Decides when it's possible to build Scouts
-	 * @return  TRUE: When it's possible FALSE: When it's not
-	 */
+	  * metodo che stabilisce se è il momento di produrre uno scout
+	  * @return TRUE se è il momento, FALSE altrimenti
+	  * @throws GameActionException
+	  */
 	public boolean shouldBuildScout() throws GameActionException{
 		return (getNumScout()<= MAX_SCOUTS && rc.getRoundNum()< NO_SCOUT_NEEDED && getNumScout()<=getNumSoldier() && rc.canBuildRobot(RobotType.SCOUT, randomDirection()));
 	}
 
 	/**
-	 * Decides when it's possible to build Soldiers
-	 * @return  TRUE: When it's possible FALSE: When it's not
-	 */
+	  * metodo che stabilisce se è il momento di produrre un soldier
+	  * @return TRUE se è il momento, FALSE altrimenti
+	  * @throws GameActionException
+	  */
 	public boolean shouldBuildSoldier() throws GameActionException {
 		return (rc.canBuildRobot(RobotType.SOLDIER, randomDirection()) && (isInDanger() || (getNumSoldier()<= MAX_SOLDIERS && rc.getTeamBullets()> BULLETS_NEEDED)));
 	}
 	
 	/**
-	 * Decides when it's possible to build Lumberjacks
-	 * @return  TRUE: When it's possible FALSE: When it's not
-	 */
+	  * metodo che stabilisce se è il momento di produrre un lumberjack
+	  * @return TRUE se è il momento, FALSE altrimenti
+	  * @throws GameActionException
+	  */
 	public boolean shouldBuildLumberjack() throws GameActionException {
 		return (getNumLumberjack()<=MAX_LUMBERJACKS && (trees.length>=TREES_LUMBERJACK || (rc.getRoundNum()>ROUND_LUMBERJACK && getNumLumberjack()==MIN_LUMBERJACKS)) && rc.canBuildRobot(RobotType.LUMBERJACK, randomDirection()));
 	}
 	
 	/**
-	 * Decides when it's possible to build Tanks
-	 * @return  TRUE: When it's possible FALSE: When it's not
-	 */
+	  * metodo che stabilisce se è il momento di produrre un tank
+	  * @return TRUE se è il momento, FALSE altrimenti
+	  * @throws GameActionException
+	  */
 	public boolean shouldBuildTank() throws GameActionException {
 		return ((rc.getRobotCount()>=21 || rc.getRoundNum()>ROUND_TANK) && getNumTank()== MIN_TANKS && rc.canBuildRobot(RobotType.TANK, randomDirection()));
 	}
 	
+	/**
+	 * tattica che consiste nel vendere proiettili per accumulare
+	 * punti vittoria, invece che piantare o produrre unità
+	 * @throws GameActionException
+	 */
 	public void winningStrategy() throws GameActionException{  
 		if (rc.getTeamBullets() >= (GameConstants.VICTORY_POINTS_TO_WIN - rc.getTeamVictoryPoints())* rc.getVictoryPointCost()) {
 			rc.donate(rc.getTeamBullets());

@@ -21,7 +21,7 @@ public class ScoutLogic extends RobotLogic{
 		
 	        try {
 	        	
-	        	boolean timeToRun=rc.getRoundNum()-birthRound < 70 || (rc.getRoundNum()-birthRound > 300 && rc.getRoundNum()-birthRound <= 350);
+	        	boolean timeToRun=rc.getRoundNum()-birthRound < 40 || (rc.getRoundNum()-birthRound > 300 && rc.getRoundNum()-birthRound <= 340);
 	        	
 	        	gameInfo();
 	        	trySenseEnemyArchon();
@@ -49,6 +49,11 @@ public class ScoutLogic extends RobotLogic{
 		}
 	}
 
+	/**
+	 * metodo che controlla se lo scout morto occupava un canale broadcast,
+	 * in caso lo libera
+	 * @throws GameActionException
+	 */
 	public void whichScoutIsDead() throws GameActionException {
 		if(rc.readBroadcast(SOLAR_1)==rc.getID()) {
 			rc.broadcast(SOLAR_1, 0);

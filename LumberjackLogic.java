@@ -41,7 +41,9 @@ public class LumberjackLogic extends RobotLogic {
                     	rc.chop(treeLocation);
                     }
                 }
-                if(!moved) tryMove(randomDirection());
+                else if(rc.getRoundNum()>2500){
+                	vikingStrategy();
+                }
 
                 if(!isDead){
                 	if(isDead()){
