@@ -172,7 +172,7 @@ public abstract class RobotLogic {
 	 
 	 /**
 	 * tattica che fa spostare truppe di tipo lumberjack e gardner verso zone sicure,
-	 * comunicate dalla exploreStrategy(), dove produrre unit‡ e tagliare alberi
+	 * comunicate dalla exploreStrategy(), dove produrre unit√† e tagliare alberi
 	 * @throws GameActionException
 	 */
 	 public void farmStrategy() throws GameActionException{
@@ -273,7 +273,7 @@ public abstract class RobotLogic {
 	 }
 	 
 	 /**
-	 * tattica destinata alle unit‡ combattive per il soccorso dell'archon
+	 * tattica destinata alle unit√† combattive per il soccorso dell'archon
 	 * e di alleati in pericolo in determinate condizioni
 	 * @throws GameActionException
 	 */
@@ -346,7 +346,7 @@ public abstract class RobotLogic {
 	 }
 	 
 	 /**
-	 * tattica che permette alle unit‡ di provare ad evitare i colpi dei
+	 * tattica che permette alle unit√† di provare ad evitare i colpi dei
 	 * nemici, scegliendo la direzione migliore in cui muoversi
 	 * @throws GameActionException
 	 */
@@ -456,7 +456,7 @@ public abstract class RobotLogic {
 	 }
 	 
 	 /**
-	  * metodo che permette alle unit‡ di mandare in broadcast la nuova posizione 
+	  * metodo che permette alle unit√† di mandare in broadcast la nuova posizione 
 	  * dell'archon nemico, se questo viene localizzato
 	  * @throws GameActionException
 	  */
@@ -491,9 +491,9 @@ public abstract class RobotLogic {
 
 	
 	 /**
-	 * metodo che stabilisce se il robot Ë in pericolo, ovvero se ci sono
+	 * metodo che stabilisce se il robot √® in pericolo, ovvero se ci sono
 	 * nemici nelle vicinanze
-	 * @return TRUE: se Ë in pericolo, FALSE altrimenti
+	 * @return TRUE: se √® in pericolo, FALSE altrimenti
 	 */
 	 boolean isInDanger() throws GameActionException{
 		 
@@ -515,8 +515,8 @@ public abstract class RobotLogic {
 	 }
 	 
 	 /**
-	 * metodo che controlla se l'archon Ë in pericolo
-	 * @return TRUE: se Ë in pericolo, FALSE altrimenti
+	 * metodo che controlla se l'archon √® in pericolo
+	 * @return TRUE: se √® in pericolo, FALSE altrimenti
 	 * @throws GameActionException
 	 */
 	 public boolean isArchonInDanger() throws GameActionException{
@@ -532,8 +532,8 @@ public abstract class RobotLogic {
     }
 
     /**
-    * controlla se la truppa Ë da considerare morta
-    * @return TRUE: se si puÚ considerare morta, FALSE altrimenti
+    * controlla se la truppa √® da considerare morta
+    * @return TRUE: se si pu√≤ considerare morta, FALSE altrimenti
     * @throws GameActionException 
     */
     public boolean isDead(){
@@ -546,7 +546,7 @@ public abstract class RobotLogic {
     }
     
     /**
-     * metodo che controlla se l'Archon nemico Ë considerabile morto
+     * metodo che controlla se l'Archon nemico √® considerabile morto
      * @throws GameActionException
      */
     public void enemyArchonKilled() throws GameActionException{
@@ -572,7 +572,7 @@ public abstract class RobotLogic {
 		}
     }
     
-    /**metodo che permette alle unit‡ combattenti di attaccare i nemici senza ulteriori strategie
+    /**metodo che permette alle unit√† combattenti di attaccare i nemici senza ulteriori strategie
      * @throws GameActionException
     */
     public void killThemAll() throws GameActionException{
@@ -592,7 +592,7 @@ public abstract class RobotLogic {
     		
     	}
     	if(killThemAll != 0){
-    		angolo+= (100/rc.getRoundNum());
+    		angolo+= 0.05;
    		 	Direction dir = new Direction(angolo);
     		if(!rc.hasMoved()) tryMove (dir);
     	}
@@ -670,7 +670,7 @@ public abstract class RobotLogic {
     * cerca di muovere la truppa nella direzione data
     *
     * @param dir la direzione in cui si vuole far muovere la truppa
-    * @return TRUE: se il movimento Ë stato eseguito FALSE: se non Ë stato eseguito
+    * @return TRUE: se il movimento √® stato eseguito FALSE: se non √® stato eseguito
     * @throws GameActionException
     */
     boolean tryMove (Direction dir) throws GameActionException{
@@ -683,7 +683,7 @@ public abstract class RobotLogic {
     * @param dir la direzione in cui si vuole far muovere la truppa
     * @param degreeOffset spazio tra le direzioni controllate
     * @param checksPerSide numero di direzioni controllate su ogni lato nel caso non sia possibile utilizzare quella data
-    * @return TRUE: se il movimento Ë stato eseguito FALSE: se non Ë stato eseguito
+    * @return TRUE: se il movimento √® stato eseguito FALSE: se non √® stato eseguito
     * @throws GameActionException
     */
     boolean tryMove (Direction dir, float degreeOffset, int checksPerSide) throws GameActionException {
